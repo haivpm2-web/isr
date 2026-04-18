@@ -110,11 +110,15 @@ Thiết lập các biến sau trong Railway:
 ```env
 DJANGO_SECRET_KEY=your-strong-secret-key
 DJANGO_DEBUG=False
+DJANGO_SECURE_SSL_REDIRECT=True
+DJANGO_SECURE_HSTS_SECONDS=3600
 ```
 
 `DATABASE_URL` sẽ được Railway tự cấp khi bạn thêm PostgreSQL.
 
 App hiện tự đọc `RAILWAY_PUBLIC_DOMAIN` do Railway cung cấp để thêm vào `ALLOWED_HOSTS` và `CSRF_TRUSTED_ORIGINS`. Bạn chỉ cần khai báo thêm `DJANGO_ALLOWED_HOSTS` hoặc `DJANGO_CSRF_TRUSTED_ORIGINS` nếu dùng custom domain hoặc muốn mở rộng thêm host khác.
+
+Nên dùng `DJANGO_SECRET_KEY` dài và ngẫu nhiên. Với Railway, `DJANGO_SECURE_SSL_REDIRECT=True` và `DJANGO_SECURE_HSTS_SECONDS=3600` là cấu hình production an toàn để bắt buộc HTTPS.
 
 Nếu cần, có thể copy giá trị từ `.env.example` để làm mốc cấu hình local trước khi tách riêng biến môi trường trên Railway.
 
