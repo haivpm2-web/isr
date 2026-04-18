@@ -112,7 +112,6 @@ DJANGO_SECRET_KEY=your-strong-secret-key
 DJANGO_DEBUG=False
 DJANGO_SECURE_SSL_REDIRECT=True
 DJANGO_SECURE_HSTS_SECONDS=3600
-DJANGO_LOAD_DEMO_DATA=True
 DJANGO_DEMO_PASSWORD=Demo@12345
 ```
 
@@ -122,7 +121,9 @@ App hiện tự đọc `RAILWAY_PUBLIC_DOMAIN` do Railway cung cấp để thêm
 
 Nên dùng `DJANGO_SECRET_KEY` dài và ngẫu nhiên. Với Railway, `DJANGO_SECURE_SSL_REDIRECT=True` và `DJANGO_SECURE_HSTS_SECONDS=3600` là cấu hình production an toàn để bắt buộc HTTPS.
 
-Nếu cần dữ liệu demo để test giao diện, bật `DJANGO_LOAD_DEMO_DATA=True` ở lần deploy đầu. App sẽ tự tạo 1 admin, 1 bác sĩ, 1 điều dưỡng và 2 bệnh nhân mẫu cùng dữ liệu ECG, phục hồi, khám, đơn thuốc và đánh giá PHCN. Có thể đổi `DJANGO_DEMO_PASSWORD` sang mật khẩu riêng trước khi deploy. Sau khi seed xong nên đổi lại `DJANGO_LOAD_DEMO_DATA=False`.
+Railway không tự điền mục Variables từ source code. Vì vậy app hiện được cấu hình để luôn chạy `seed_demo_data` sau `migrate`. Lệnh này an toàn để chạy lặp lại: nó làm mới dữ liệu demo của 2 bệnh nhân mẫu và không tự reset mật khẩu demo trừ khi bạn bật `DJANGO_RESET_DEMO_PASSWORDS=True`.
+
+App sẽ tự tạo 1 admin, 1 bác sĩ, 1 điều dưỡng và 2 bệnh nhân mẫu cùng dữ liệu ECG, phục hồi, khám, đơn thuốc và đánh giá PHCN. Có thể đổi `DJANGO_DEMO_PASSWORD` sang mật khẩu riêng trước khi deploy.
 
 Nếu cần, có thể copy giá trị từ `.env.example` để làm mốc cấu hình local trước khi tách riêng biến môi trường trên Railway.
 

@@ -18,6 +18,7 @@ from patients.models import (
 
 
 DEFAULT_PASSWORD = os.getenv('DJANGO_DEMO_PASSWORD', 'Demo@12345')
+RESET_PASSWORDS = os.getenv('DJANGO_RESET_DEMO_PASSWORDS', 'False').lower() == 'true'
 
 
 class Command(BaseCommand):
@@ -130,7 +131,7 @@ class Command(BaseCommand):
         user.is_staff = is_staff
         user.is_superuser = is_superuser
         user.is_active = True
-        if created or not user.check_password(DEFAULT_PASSWORD):
+        if created or RESET_PASSWORDS:
             user.set_password(DEFAULT_PASSWORD)
         user.save()
         return user
@@ -195,6 +196,11 @@ class Command(BaseCommand):
 
     def _seed_primary_case(self, patient, nurse_user, doctor_user):
         now = timezone.now()
+        patient.ecg_records.all().delete()
+        patient.recovery_records.all().delete()
+        patient.examination_records.all().delete()
+        patient.prescriptions.all().delete()
+        patient.rehab_assessments.all().delete()
         ecg_samples = [
             {'days': 9, 'heart_rate': 108, 'pr': 152, 'qrs': 94, 'qt': 430, 'qtc': 458, 'rr': 556, 'rhythm': 'sinus_tach', 'abnormal': True, 'st': 0.8, 'note': 'Nhịp nhanh xoang sau đau hậu phẫu.'},
             {'days': 6, 'heart_rate': 96, 'pr': 148, 'qrs': 92, 'qt': 422, 'qtc': 440, 'rr': 625, 'rhythm': 'normal_sinus', 'abnormal': False, 'st': 0.2, 'note': 'Chỉ số dần ổn định.'},
@@ -336,6 +342,11 @@ class Command(BaseCommand):
 
     def _seed_secondary_case(self, patient, nurse_user, doctor_user):
         now = timezone.now()
+        patient.ecg_records.all().delete()
+        patient.recovery_records.all().delete()
+        patient.examination_records.all().delete()
+        patient.prescriptions.all().delete()
+        patient.rehab_assessments.all().delete()
         ECGRecord.objects.update_or_create(
             patient=patient,
             recorded_at=now - timedelta(days=4),
