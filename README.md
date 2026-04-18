@@ -138,13 +138,13 @@ bash railway-start.sh
 Script này sẽ lần lượt chạy:
 
 ```bash
-/opt/venv/bin/python manage.py collectstatic --noinput
-/opt/venv/bin/python manage.py migrate
-/opt/venv/bin/python manage.py seed_demo_data
-/opt/venv/bin/gunicorn hospital_isr.wsgi --bind 0.0.0.0:$PORT
+python3 manage.py collectstatic --noinput
+python3 manage.py migrate
+python3 manage.py seed_demo_data
+python3 -m gunicorn hospital_isr.wsgi --bind 0.0.0.0:$PORT
 ```
 
-`nixpacks.toml` hiện chỉ dùng Python provider trên Railway, tự bootstrap `pip` trong `/opt/venv` và bỏ qua bước `python -m pip` mặc định vốn có thể fail với Python 3.12 trên Nix.
+`nixpacks.toml` hiện chỉ dùng Python provider trên Railway, bỏ qua bước package-manager mặc định của Nixpacks và tự bootstrap `pip` bằng `python3` trước khi cài `requirements.txt`.
 
 ### 4. Lưu ý
 
