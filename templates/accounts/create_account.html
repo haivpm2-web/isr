@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+{% block title %}Tạo tài khoản {{ role_label }} – ISR Hospital{% endblock %}
+{% block page_title %}<i class="fas fa-user-plus me-2 text-primary"></i>Tạo tài khoản {{ role_label }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card shadow-sm">
+        <div class="card-header bg-white">
+          <div class="d-flex align-items-center gap-3">
+            {% if role == 'patient' %}
+              <span class="card-icon-badge bg-primary"><i class="fas fa-user-injured"></i></span>
+            {% elif role == 'doctor' %}
+              <span class="card-icon-badge bg-success"><i class="fas fa-stethoscope"></i></span>
+            {% elif role == 'nurse' %}
+              <span class="card-icon-badge" style="background:#0f766e;"><i class="fas fa-user-nurse"></i></span>
+            {% else %}
+              <span class="card-icon-badge bg-warning"><i class="fas fa-shield-alt"></i></span>
+            {% endif %}
+            <div>
+              <h5 class="mb-0 fw-semibold">Tạo tài khoản {{ role_label }}</h5>
+              <small class="text-muted">Điền đầy đủ thông tin bên dưới</small>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-body p-4">
+          <form method="post" novalidate>
+            {% csrf_token %}
+
+            <!-- Account info -->
+            <h6 class="section-heading"><i class="fas fa-lock me-2"></i>Thông tin đăng nhập</h6>
+            <div class="row g-3 mb-4">
+              <div class="col-md-6">
+                <label class="form-label">{{ form.username.label }} <span class="text-danger">*</span></label>
+                {{ form.username }}
+                {% for e in form.username.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">{{ form.password.label }} <span class="text-danger">*</span></label>
+                {{ form.password }}
+                {% for e in form.password.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">{{ form.confirm_password.label }} <span class="text-danger">*</span></label>
+                {{ form.confirm_password }}
+                {% for e in form.confirm_password.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+              </div>
+            </div>
+
+            <!-- Personal info -->
+            <h6 class="section-heading"><i class="fas fa-id-card me-2"></i>Thông tin cá nhân</h6>
+            <div class="row g-3 mb-4">
+              <div class="col-md-3">
+                <label class="form-label">{{ form.last_name.label }}</label>
+                {{ form.last_name }}
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">{{ form.first_name.label }}</label>
+                {{ form.first_name }}
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">{{ form.phone_number.label }}</label>
+                {{ form.phone_number }}
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">{{ form.date_of_birth.label }}</label>
+                {{ form.date_of_birth }}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">{{ form.email.label }}</label>
+                {{ form.email }}
+              </div>
+            </div>
+
+            {% if role == 'patient' %}
+            <!-- Patient extras -->
+            <h6 class="section-heading"><i class="fas fa-notes-medical me-2"></i>Thông tin y tế</h6>
+            <div class="row g-3 mb-4">
+              <div class="col-md-4">
+                <label class="form-label">{{ form.gender.label }}</label>
+                {{ form.gender }}
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">{{ form.blood_type.label }}</label>
+                {{ form.blood_type }}
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">{{ form.admission_date.label }}</label>
+                {{ form.admission_date }}
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">{{ form.treatment_status.label }}</label>
+                {{ form.treatment_status }}
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">{{ form.discharge_date.label }}</label>
+                {{ form.discharge_date }}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">{{ form.doctor.label }}</label>
+                {{ form.doctor }}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">{{ form.discharge_condition.label }}</label>
+                {{ form.discharge_condition }}
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">{{ form.surgery_status.label }}</label>
+                {{ form.surgery_status }}
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">{{ form.surgery_date.label }}</label>
+                {{ form.surgery_date }}
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">{{ form.postoperative_status.label }}</label>
+                {{ form.postoperative_status }}
+              </div>
+              <div class="col-12">
+                <label class="form-label">{{ form.surgery_name.label }}</label>
+                {{ form.surgery_name }}
+              </div>
+              <div class="col-12">
+                <label class="form-label">{{ form.diagnosis.label }}</label>
+                {{ form.diagnosis }}
+              </div>
+            </div>
+
+            {% elif role == 'doctor' %}
+            <!-- Doctor extras -->
+            <h6 class="section-heading"><i class="fas fa-hospital me-2"></i>Thông tin nghề nghiệp</h6>
+            <div class="row g-3 mb-4">
+              <div class="col-md-4">
+                <label class="form-label">{{ form.specialization.label }} <span class="text-danger">*</span></label>
+                {{ form.specialization }}
+                {% for e in form.specialization.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">{{ form.license_number.label }} <span class="text-danger">*</span></label>
+                {{ form.license_number }}
+                {% for e in form.license_number.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">{{ form.department.label }}</label>
+                {{ form.department }}
+              </div>
+            </div>
+            {% elif role == 'nurse' %}
+            <div class="alert alert-info border-0 mb-4">
+              <i class="fas fa-circle-info me-2"></i>Tài khoản điều dưỡng / y tá dùng để nhập dữ liệu lâm sàng cho bệnh nhân. Không có quyền kê đơn thuốc.
+            </div>
+            {% endif %}
+
+            <!-- Non-field errors -->
+            {% for e in form.non_field_errors %}
+            <div class="alert alert-danger"><i class="fas fa-exclamation-triangle me-2"></i>{{ e }}</div>
+            {% endfor %}
+
+            <div class="d-flex gap-2 justify-content-end">
+              <a href="{% url 'accounts:admin_dashboard' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i>Quay lại
+              </a>
+              <button type="submit" class="btn btn-primary px-4">
+                <i class="fas fa-save me-1"></i>Tạo tài khoản
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

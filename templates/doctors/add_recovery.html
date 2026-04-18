@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block title %}Thêm dữ liệu phục hồi – {{ patient.user.get_full_name }}{% endblock %}
+{% block page_title %}<i class="fas fa-walking me-2 text-success"></i>Thêm dữ liệu phục hồi chân{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row justify-content-center">
+    <div class="col-xl-9">
+      <div class="card shadow-sm">
+        <div class="card-header bg-white">
+          <div class="d-flex align-items-center gap-3">
+            <span class="card-icon-badge bg-success"><i class="fas fa-walking"></i></span>
+            <div>
+              <h5 class="mb-0 fw-semibold">Phục hồi – {{ patient.user.get_full_name }}</h5>
+              <small class="text-muted">{{ patient.diagnosis|default:"" }}</small>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-body p-4">
+          <form method="post" novalidate>
+            {% csrf_token %}
+
+            <div class="row g-3 mb-4">
+              <div class="col-md-6">
+                <label class="form-label">{{ form.recorded_at.label }}</label>
+                {{ form.recorded_at }}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">{{ form.affected_leg.label }}</label>
+                {{ form.affected_leg }}
+              </div>
+            </div>
+
+            <h6 class="section-heading"><i class="fas fa-dumbbell me-2"></i>Thông số chức năng</h6>
+            <div class="row g-3 mb-4">
+              <div class="col-md-6 col-lg-3">
+                <label class="form-label">{{ form.muscle_strength.label }} <span class="text-danger">*</span></label>
+                {{ form.muscle_strength }}
+                {% for e in form.muscle_strength.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+              </div>
+              <div class="col-md-6 col-lg-3">
+                <label class="form-label">{{ form.range_of_motion.label }} <span class="text-danger">*</span></label>
+                {{ form.range_of_motion }}
+                <div class="form-text">0 – 180°</div>
+                {% for e in form.range_of_motion.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+              </div>
+              <div class="col-md-6 col-lg-3">
+                <label class="form-label">{{ form.heart_rate.label }}</label>
+                {{ form.heart_rate }}
+              </div>
+              <div class="col-md-6 col-lg-3">
+                <label class="form-label">{{ form.spo2.label }}</label>
+                {{ form.spo2 }}
+              </div>
+              <div class="col-md-6 col-lg-3">
+                <label class="form-label">{{ form.fatigue_index.label }}</label>
+                {{ form.fatigue_index }}
+              </div>
+              <div class="col-md-6 col-lg-3">
+                <label class="form-label">{{ form.pain_level.label }} <span class="text-danger">*</span></label>
+                {{ form.pain_level }}
+                {% for e in form.pain_level.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+              </div>
+              <div class="col-md-6 col-lg-3">
+                <label class="form-label">{{ form.swelling_level.label }}</label>
+                {{ form.swelling_level }}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">{{ form.walking_ability.label }}</label>
+                {{ form.walking_ability }}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">{{ form.recovery_percentage.label }} <span class="text-danger">*</span></label>
+                {{ form.recovery_percentage }}
+                <div class="form-text">0 – 100%</div>
+                {% for e in form.recovery_percentage.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+              </div>
+            </div>
+
+            <h6 class="section-heading"><i class="fas fa-microchip me-2"></i>Dữ liệu cảm biến và dáng đi</h6>
+            <div class="row g-3 mb-4">
+              <div class="col-md-6 col-lg-3"><label class="form-label">{{ form.imu_velocity.label }}</label>{{ form.imu_velocity }}</div>
+              <div class="col-md-6 col-lg-3"><label class="form-label">{{ form.imu_acceleration.label }}</label>{{ form.imu_acceleration }}</div>
+              <div class="col-md-6 col-lg-3"><label class="form-label">{{ form.gait_speed.label }}</label>{{ form.gait_speed }}</div>
+              <div class="col-md-6 col-lg-3"><label class="form-label">{{ form.cadence.label }}</label>{{ form.cadence }}</div>
+              <div class="col-md-6 col-lg-6"><label class="form-label">{{ form.step_length.label }}</label>{{ form.step_length }}</div>
+              <div class="col-md-6 col-lg-6"><label class="form-label">{{ form.plantar_force.label }}</label>{{ form.plantar_force }}</div>
+            </div>
+
+            <h6 class="section-heading"><i class="fas fa-comment-medical me-2"></i>Ghi chú</h6>
+            <div class="row g-3 mb-4">
+              <div class="col-md-6">
+                <label class="form-label">{{ form.physical_therapy_notes.label }}</label>
+                {{ form.physical_therapy_notes }}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">{{ form.doctor_notes.label }}</label>
+                {{ form.doctor_notes }}
+              </div>
+            </div>
+
+            <div class="d-flex gap-2 justify-content-end">
+              <a href="{% url 'doctors:patient_detail' patient.id %}" class="btn btn-outline-secondary">
+                <i class="fas fa-times me-1"></i>Hủy
+              </a>
+              <button type="submit" class="btn btn-success px-4">
+                <i class="fas fa-save me-1"></i>Lưu dữ liệu phục hồi
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

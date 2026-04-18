@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% block title %}Đơn thuốc {{ prescription.issued_at|date:"d/m/Y" }}{% endblock %}
+{% block page_title %}<i class="fas fa-file-prescription me-2 text-primary"></i>Chi tiết đơn thuốc{% endblock %}
+
+{% block extra_css %}
+<style>
+@media print {
+  .sidebar,
+  .sidebar-overlay,
+  .page-title-bar,
+  .site-footer,
+  .print-hide,
+  .alert {
+    display: none !important;
+  }
+
+  .main-wrapper {
+    margin-left: 0 !important;
+    padding: 0 !important;
+  }
+
+  .page-content,
+  .container-fluid {
+    padding: 0 !important;
+  }
+
+  .prescription-sheet {
+    box-shadow: none !important;
+    border: 1px solid #d0d7de !important;
+  }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid pb-4">
+  <div class="page-hero mb-4 print-hide">
+    <div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">
+      <div>
+        <span class="section-kicker"><i class="fas fa-file-prescription"></i>Đơn thuốc</span>
+        <h1 class="page-hero-title">Đơn thuốc ngày {{ prescription.issued_at|date:"d/m/Y" }} cho {{ patient.user.get_full_name }}</h1>
+        <p class="page-hero-text">Trang này tối ưu để xem lại chỉ định, kiểm tra sinh hiệu và bấm in đơn trực tiếp ngay trong hồ sơ.</p>
+      </div>
+      <div class="d-flex align-items-center gap-2 flex-wrap">
+        <a href="{% url 'doctors:prescription_list' patient.id %}" class="btn btn-outline-secondary btn-sm"><i class="fas fa-arrow-left me-1"></i>Danh sách đơn</a>
+        {% if user.is_doctor %}
+        <a href="{% url 'doctors:add_prescription' patient.id %}" class="btn btn-outline-primary btn-sm"><i class="fas fa-plus me-1"></i>Đơn mới</a>
+        {% endif %}
+        <button type="button" onclick="window.print()" class="btn btn-primary btn-sm"><i class="fas fa-print me-1"></i>In đơn thuốc</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card border-0 shadow-sm prescription-sheet">
+    <div class="card-body p-4 p-xl-5">
+      <div class="d-flex justify-content-between align-items-start gap-4 flex-wrap border-bottom pb-4 mb-4">
+        <div>
+          <h2 class="h3 fw-bold mb-1">ISR Hospital</h2>
+          <div class="text-muted">Đơn thuốc ngoại trú / chỉ định dùng thuốc</div>
+        </div>
+        <div class="text-md-end">
+          <div class="small text-muted">Số đơn</div>
+          <div class="fw-semibold">RX-{{ prescription.id|stringformat:"05d" }}</div>
+          <div class="small text-muted mt-2">Ngày cấp: {{ prescription.issued_at|date:"d/m/Y H:i" }}</div>
+        </div>
+      </div>
+
+      <div class="row g-4 mb-4">
+        <div class="col-lg-7">
+          <div class="content-block h-100">
+            <div class="content-block-title"><i class="fas fa-user-injured"></i>Thông tin bệnh nhân</div>
+            <div class="content-block-body">
+              <div class="row g-3 small">
+                <div class="col-md-6"><strong>Họ tên:</strong> {{ patient.user.get_full_name }}</div>
+                <div class="col-md-6"><strong>Giới tính:</strong> {{ patient.get_gender_display|default:"–" }}</div>
+                <div class="col-md-6"><strong>Ngày sinh:</strong> {{ patient.date_of_birth|date:"d/m/Y"|default:"–" }}</div>
+                <div class="col-md-6"><strong>Mã BN:</strong> {{ patient.user.username }}</div>
+                <div class="col-md-6"><strong>Nhóm máu:</strong> {{ patient.blood_type|default:"–" }}</div>
+                <div class="col-md-6"><strong>Bác sĩ:</strong> {{ prescription.prescribed_by.get_full_name|default:"–" }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-5">
+          <div class="content-block h-100">
+            <div class="content-block-title"><i class="fas fa-heart-pulse"></i>Sinh hiệu kèm đơn</div>
+            <div class="content-block-body">
+              <div class="d-flex flex-wrap gap-2">
+                {% if prescription.blood_pressure_systolic %}<span class="score-pill soft-warning">HA {{ prescription.blood_pressure_systolic }}/{{ prescription.blood_pressure_diastolic }} mmHg</span>{% endif %}
+                {% if prescription.heart_rate %}<span class="score-pill soft-danger">Mạch {{ prescription.heart_rate }} bpm</span>{% endif %}
+                {% if prescription.respiratory_rate %}<span class="score-pill soft-info">Nhịp thở {{ prescription.respiratory_rate }}</span>{% endif %}
+                {% if prescription.temperature %}<span class="score-pill soft-warning">{{ prescription.temperature }} °C</span>{% endif %}
+                {% if prescription.spo2 %}<span class="score-pill soft-success">SpO₂ {{ prescription.spo2 }}%</span>{% endif %}
+                {% if prescription.weight %}<span class="score-pill soft-info">{{ prescription.weight }} kg</span>{% endif %}
+                {% if prescription.pain_score is not None %}<span class="score-pill soft-danger">Đau {{ prescription.pain_score }}/10</span>{% endif %}
+                {% if prescription.blood_glucose %}<span class="score-pill soft-warning">Đường huyết {{ prescription.blood_glucose }} mmol/L</span>{% endif %}
+              </div>
+              {% if prescription.examination %}
+              <div class="small text-muted mt-3">Gắn với lần khám ngày {{ prescription.examination.exam_date|date:"d/m/Y H:i" }}.</div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="content-stack">
+        {% if prescription.diagnosis %}<div class="content-block"><div class="content-block-title"><i class="fas fa-diagnoses text-danger"></i>Chẩn đoán</div><div class="content-block-body fw-semibold text-danger">{{ prescription.diagnosis|linebreaksbr }}</div></div>{% endif %}
+        {% if prescription.clinical_notes %}<div class="content-block"><div class="content-block-title"><i class="fas fa-clipboard-check"></i>Chỉ định lâm sàng</div><div class="content-block-body">{{ prescription.clinical_notes|linebreaksbr }}</div></div>{% endif %}
+        <div class="content-block"><div class="content-block-title"><i class="fas fa-pills text-primary"></i>Thuốc kê</div><div class="content-block-body"><pre class="soft-note small mb-0" style="white-space:pre-wrap;">{{ prescription.medications }}</pre></div></div>
+        {% if prescription.dosage_instructions %}<div class="content-block"><div class="content-block-title"><i class="fas fa-clock"></i>Cách dùng</div><div class="content-block-body">{{ prescription.dosage_instructions|linebreaksbr }}</div></div>{% endif %}
+        {% if prescription.advice %}<div class="content-block"><div class="content-block-title"><i class="fas fa-notes-medical"></i>Dặn dò</div><div class="content-block-body">{{ prescription.advice|linebreaksbr }}</div></div>{% endif %}
+      </div>
+
+      <div class="row g-4 mt-3 align-items-end">
+        <div class="col-md-6">
+          <div class="small text-muted">Ngày tái khám</div>
+          <div class="fw-semibold">{{ prescription.follow_up_date|date:"d/m/Y"|default:"Chưa hẹn" }}</div>
+        </div>
+        <div class="col-md-6 text-md-end">
+          <div class="small text-muted mb-5">Bác sĩ kê đơn</div>
+          <div class="fw-semibold">{{ prescription.prescribed_by.get_full_name|default:"________________" }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

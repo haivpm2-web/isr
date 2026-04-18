@@ -1,0 +1,252 @@
+{% extends "base.html" %}
+{% load ui_i18n %}
+{% block title %}{% if user.is_nurse_user %}Dashboard Điều dưỡng{% else %}{% t "Dashboard Bác sĩ" %}{% endif %} – {{ staff_user.get_full_name|default:user.get_full_name }}{% endblock %}
+{% block page_title %}<i class="fas fa-tachometer-alt me-2 text-primary"></i>{% if user.is_nurse_user %}Tổng quan điều dưỡng{% else %}{% t "Tổng quan bác sĩ" %}{% endif %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+
+  <div class="dashboard-hero mb-4">
+    <div class="dashboard-hero-main">
+      <div class="d-flex align-items-center gap-3">
+        <span class="dashboard-hero-icon">
+          <i class="fas {% if user.is_nurse_user %}fa-user-nurse{% else %}fa-user-doctor{% endif %}"></i>
+        </span>
+        <div>
+          <div class="dashboard-eyebrow">{% if user.is_nurse_user %}TRUNG TÂM NHẬP LIỆU LÂM SÀNG{% else %}BẢNG THEO DÕI BÁC SĨ ĐIỀU TRỊ{% endif %}</div>
+          <h3 class="dashboard-hero-title mb-1">{% if user.is_nurse_user %}{{ staff_user.get_full_name|default:staff_user.username }}{% else %}BS. {{ profile.user.get_full_name }}{% endif %}</h3>
+          <div class="d-flex flex-wrap gap-3 text-light small opacity-90">
+            {% if user.is_nurse_user %}
+            <span><i class="fas fa-notes-medical me-1"></i>ECG · Khám · PHCN · Phục hồi</span>
+            <span><i class="fas fa-clipboard-check me-1"></i>Ưu tiên phát hiện ca cần chú ý</span>
+            {% else %}
+            <span><i class="fas fa-hospital me-1"></i>{{ profile.get_department_display }}</span>
+            <span><i class="fas fa-stethoscope me-1"></i>{{ profile.specialization }}</span>
+            <span><i class="fas fa-id-badge me-1"></i>CCHN: {{ profile.license_number }}</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      <div class="dashboard-chip-row mt-3">
+        <span class="dashboard-chip neutral"><i class="fas fa-users me-1"></i>{{ patient_count }} bệnh nhân</span>
+        <span class="dashboard-chip danger"><i class="fas fa-triangle-exclamation me-1"></i>{{ critical_patient_count }} ca cần chú ý</span>
+        <span class="dashboard-chip accent"><i class="fas fa-wave-square me-1"></i>{{ abnormal_ecg_count }} ECG bất thường</span>
+      </div>
+    </div>
+  </div>
+
+  {% if critical_patients %}
+  <div class="card dashboard-section-card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <span class="fw-semibold"><i class="fas fa-siren-on me-2 text-danger"></i>Danh sách cần theo dõi sát</span>
+      <span class="dashboard-inline-note">Ưu tiên các hồ sơ có ECG bất thường, đau cao hoặc phục hồi chậm</span>
+    </div>
+    <div class="card-body">
+      <div class="dashboard-alert-grid">
+        {% for item in critical_patients %}
+        <a href="{% url 'doctors:patient_detail' item.patient.id %}" class="dashboard-alert-card text-decoration-none">
+          <div class="d-flex justify-content-between align-items-start gap-3">
+            <div>
+              <div class="fw-bold text-dark">{{ item.patient.user.get_full_name }}</div>
+              <div class="small text-muted mt-1">{{ item.patient.diagnosis|truncatechars:58 }}</div>
+            </div>
+            <span class="badge bg-danger-subtle text-danger border border-danger-subtle">{{ item.reasons|join:", " }}</span>
+          </div>
+          <div class="dashboard-alert-meta mt-3">
+            {% if item.latest_ecg %}<span><i class="fas fa-heart-pulse"></i>{{ item.latest_ecg.heart_rate }} bpm</span>{% endif %}
+            {% if item.latest_recovery %}<span><i class="fas fa-walking"></i>{{ item.latest_recovery.recovery_percentage }}%</span>{% endif %}
+            {% if item.latest_recovery %}<span><i class="fas fa-face-grimace"></i>Đau {{ item.latest_recovery.pain_level }}/10</span>{% endif %}
+          </div>
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="row g-4 mb-4">
+    <div class="col-xl-6">
+      <div class="card dashboard-section-card h-100">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <span class="fw-semibold"><i class="fas fa-bed-pulse me-2 text-danger"></i>Nhóm nguy kịch</span>
+          <span class="dashboard-inline-note">{{ critical_patient_count }} bệnh nhân cần bám sát</span>
+        </div>
+        <div class="card-body p-0">
+          {% for item in critical_patients %}
+          <a href="{% url 'doctors:patient_detail' item.patient.id %}" class="patient-list-item text-decoration-none">
+            <div class="d-flex align-items-center gap-2 w-100">
+              <div class="patient-avatar-sm"><i class="fas fa-triangle-exclamation text-danger"></i></div>
+              <div class="flex-grow-1 min-w-0">
+                <div class="fw-semibold text-truncate text-dark">{{ item.patient.user.get_full_name }}</div>
+                <div class="small text-muted text-truncate">{{ item.reasons|join:", " }}</div>
+              </div>
+              <div class="text-end small">
+                {% if item.latest_recovery %}<div class="fw-bold text-danger">{{ item.latest_recovery.recovery_percentage }}%</div>{% endif %}
+                {% if item.latest_ecg %}<div class="text-muted">{{ item.latest_ecg.heart_rate }} bpm</div>{% endif %}
+              </div>
+            </div>
+          </a>
+          {% empty %}
+          <div class="text-center text-muted py-4">Chưa có ca nguy kịch nổi bật.</div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    <div class="col-xl-6">
+      <div class="card dashboard-section-card h-100">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <span class="fw-semibold"><i class="fas fa-person-circle-check me-2 text-success"></i>Nhóm hồi phục tốt</span>
+          <span class="dashboard-inline-note">{{ recovered_patient_count }} bệnh nhân tiến triển tốt</span>
+        </div>
+        <div class="card-body p-0">
+          {% for item in recovered_patients %}
+          <a href="{% url 'doctors:patient_detail' item.patient.id %}" class="patient-list-item text-decoration-none">
+            <div class="d-flex align-items-center gap-2 w-100">
+              <div class="patient-avatar-sm"><i class="fas fa-circle-check text-success"></i></div>
+              <div class="flex-grow-1 min-w-0">
+                <div class="fw-semibold text-truncate text-dark">{{ item.patient.user.get_full_name }}</div>
+                <div class="small text-muted text-truncate">{{ item.patient.diagnosis|truncatechars:44 }}</div>
+              </div>
+              <div class="text-end small">
+                <div class="fw-bold text-success">{{ item.latest_recovery.recovery_percentage }}%</div>
+                <div class="text-muted">Đau {{ item.latest_recovery.pain_level }}/10</div>
+              </div>
+            </div>
+          </a>
+          {% empty %}
+          <div class="text-center text-muted py-4">Chưa có nhóm hồi phục tốt rõ rệt.</div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="stat-card bg-primary text-white">
+        <div class="stat-icon"><i class="fas fa-users"></i></div>
+        <div class="stat-value">{{ patient_count }}</div>
+        <div class="stat-label">{% t "Bệnh nhân" %}</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-card bg-danger text-white">
+        <div class="stat-icon"><i class="fas fa-exclamation-triangle"></i></div>
+        <div class="stat-value">{{ abnormal_ecg_count }}</div>
+        <div class="stat-label">{% t "ECG Bất thường" %}</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-card bg-success text-white">
+        <div class="stat-icon"><i class="fas fa-wave-square"></i></div>
+        <div class="stat-value">{{ recent_ecgs|length }}</div>
+        <div class="stat-label">{% t "ECG gần đây" %}</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-card bg-info text-white">
+        <div class="stat-icon"><i class="fas fa-walking"></i></div>
+        <div class="stat-value">{{ recent_recoveries|length }}</div>
+        <div class="stat-label">{% t "Ghi nhận phục hồi" %}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Patient list widget -->
+    <div class="col-lg-4">
+      <div class="card shadow-sm h-100 dashboard-section-card">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+          <span class="fw-semibold"><i class="fas fa-users me-2 text-primary"></i>{% t "Bệnh nhân của tôi" %}</span>
+          <a href="{% url 'doctors:patient_list' %}" class="btn btn-sm btn-outline-primary">{% t "Tất cả" %}</a>
+        </div>
+        <div class="card-body p-0">
+          {% for p in patients|slice:":8" %}
+          <a href="{% url 'doctors:patient_detail' p.id %}" class="patient-list-item text-decoration-none">
+            <div class="d-flex align-items-center gap-2">
+              <div class="patient-avatar-sm">
+                {% if p.gender == 'M' %}
+                <i class="fas fa-male text-primary"></i>
+                {% else %}
+                <i class="fas fa-female text-danger"></i>
+                {% endif %}
+              </div>
+              <div class="flex-grow-1 min-w-0">
+                <div class="fw-semibold text-truncate text-dark">{{ p.user.get_full_name }}</div>
+                <div class="small text-muted text-truncate">{{ p.diagnosis|default:"Chưa có chẩn đoán"|truncatechars:35 }}</div>
+              </div>
+              <div class="text-end">
+                {% if p.latest_recovery %}
+                <span class="badge bg-{{ p.latest_recovery.recovery_color }}">{{ p.overall_recovery }}%</span>
+                {% endif %}
+              </div>
+            </div>
+          </a>
+          {% empty %}
+          <div class="text-center text-muted py-4">{% t "Chưa có bệnh nhân nào." %}</div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent ECGs -->
+    <div class="col-lg-4">
+      <div class="card shadow-sm h-100 dashboard-section-card">
+        <div class="card-header bg-white fw-semibold">
+          <i class="fas fa-wave-square me-2 text-danger"></i>{% t "ECG gần đây" %}
+        </div>
+        <div class="card-body p-0">
+          {% for ecg in recent_ecgs %}
+          <div class="patient-list-item">
+            <div class="d-flex align-items-center gap-2">
+              <div class="flex-grow-1 min-w-0">
+                <div class="fw-semibold text-truncate small">{{ ecg.patient.user.get_full_name }}</div>
+                <div class="text-muted" style="font-size:.75rem">{{ ecg.recorded_at|date:"d/m/Y H:i" }}</div>
+              </div>
+              <div class="text-end">
+                <div class="fw-bold text-{{ ecg.hr_status.0 }}">{{ ecg.heart_rate }} bpm</div>
+                {% if ecg.is_abnormal %}
+                <span class="badge bg-danger" style="font-size:.65rem">{% t "ECG Bất thường" %}</span>
+                {% else %}
+                <span class="badge bg-success" style="font-size:.65rem">Bình thường</span>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+          {% empty %}
+          <div class="text-center text-muted py-4">{% t "Chưa có ECG nào." %}</div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Recovery -->
+    <div class="col-lg-4">
+      <div class="card shadow-sm h-100 dashboard-section-card">
+        <div class="card-header bg-white fw-semibold">
+          <i class="fas fa-walking me-2 text-success"></i>{% t "Phục hồi gần đây" %}
+        </div>
+        <div class="card-body p-0">
+          {% for rec in recent_recoveries %}
+          <div class="patient-list-item">
+            <div class="d-flex align-items-center gap-2">
+              <div class="flex-grow-1 min-w-0">
+                <div class="fw-semibold text-truncate small">{{ rec.patient.user.get_full_name }}</div>
+                <div class="text-muted" style="font-size:.75rem">{{ rec.recorded_at|date:"d/m/Y" }}</div>
+              </div>
+              <div class="text-end">
+                <div class="fw-bold text-{{ rec.recovery_color }}">{{ rec.recovery_percentage }}%</div>
+                <div class="small text-muted">{{ rec.get_walking_ability_display|truncatechars:15 }}</div>
+              </div>
+            </div>
+          </div>
+          {% empty %}
+          <div class="text-center text-muted py-4">{% t "Chưa có dữ liệu phục hồi." %}</div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

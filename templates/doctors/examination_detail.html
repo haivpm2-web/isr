@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}Chi tiết lịch khám {{ exam.exam_date|date:"d/m/Y" }}{% endblock %}
+{% block page_title %}<i class="fas fa-stethoscope me-2 text-info"></i>Chi tiết lịch khám{% endblock %}
+
+{% block content %}
+<div class="container-fluid pb-4">
+  <div class="page-hero mb-4">
+    <div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">
+      <div>
+        <span class="section-kicker"><i class="fas fa-file-medical"></i>Chi tiết lần khám</span>
+        <h1 class="page-hero-title">Khám ngày {{ exam.exam_date|date:"d/m/Y" }} cho {{ patient.user.get_full_name }}</h1>
+        <p class="page-hero-text">Trang tổng hợp dấu hiệu sinh tồn, nhận định lâm sàng, chẩn đoán và kế hoạch điều trị trong một bố cục dễ quét, phù hợp dùng trong buổi hội chẩn hoặc tái khám.</p>
+      </div>
+      <div class="d-flex align-items-center gap-3 flex-wrap">
+        <span class="hero-patient"><span class="avatar-circle-sm">{{ patient.user.get_full_name|first|upper }}</span>{{ patient.user.get_full_name }}</span>
+        <a href="{% url 'doctors:examination_list' patient.id %}" class="btn btn-outline-secondary btn-sm"><i class="fas fa-arrow-left me-1"></i>Danh sách khám</a>
+        {% if user.is_doctor %}
+        <a href="{% url 'doctors:add_prescription' patient.id %}?exam_id={{ exam.id }}" class="btn btn-primary btn-sm"><i class="fas fa-prescription-bottle-medical me-1"></i>Cấp thuốc</a>
+        {% endif %}
+        {% if user.is_nurse_user %}
+        <a href="{% url 'doctors:add_examination' patient.id %}" class="btn btn-info text-white btn-sm"><i class="fas fa-plus me-1"></i>Thêm lịch khám</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="metric-strip mb-4">
+    {% if exam.blood_pressure_systolic %}
+    {% with exam.bp_status as sts %}
+    <div class="metric-card"><div class="metric-label">Huyết áp</div><div class="metric-value">{{ exam.blood_pressure_systolic }}/{{ exam.blood_pressure_diastolic }}</div><div class="metric-subtext">{{ sts.1 }}</div></div>
+    {% endwith %}
+    {% endif %}
+    {% if exam.heart_rate %}
+    <div class="metric-card"><div class="metric-label">Nhịp tim</div><div class="metric-value">{{ exam.heart_rate }}</div><div class="metric-subtext">bpm</div></div>
+    {% endif %}
+    {% if exam.spo2 %}
+    <div class="metric-card"><div class="metric-label">SpO₂</div><div class="metric-value">{{ exam.spo2 }}%</div><div class="metric-subtext">Bão hòa oxy ngoại vi</div></div>
+    {% endif %}
+    <div class="metric-card"><div class="metric-label">Tái khám</div><div class="metric-value">{{ exam.follow_up_date|date:"d/m"|default:"–" }}</div><div class="metric-subtext">{{ exam.follow_up_date|date:"Y"|default:"Chưa hẹn" }}</div></div>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-xl-4">
+      <div class="d-flex flex-column gap-4 sticky-summary">
+        <div class="clinical-panel">
+          <div class="clinical-panel-header">
+            <div class="clinical-panel-title"><span class="clinical-panel-icon danger"><i class="fas fa-heart-pulse"></i></span><span>Dấu hiệu sinh tồn</span></div>
+          </div>
+          <div class="clinical-panel-body">
+            <div class="vital-grid">
+              {% if exam.blood_pressure_systolic %}
+              <div class="vital-box">{% with exam.bp_status as sts %}<div class="vital-label">Huyết áp</div><div class="vital-value text-{{ sts.0 }}">{{ exam.blood_pressure_systolic }}/{{ exam.blood_pressure_diastolic }}</div><div class="vital-unit">mmHg</div><span class="badge bg-{{ sts.0 }} mt-2">{{ sts.1 }}</span>{% endwith %}</div>
+              {% endif %}
+              {% if exam.heart_rate %}<div class="vital-box"><div class="vital-label">Nhịp tim</div><div class="vital-value {% if exam.heart_rate > 100 %}text-danger{% elif exam.heart_rate < 60 %}text-warning{% else %}text-success{% endif %}">{{ exam.heart_rate }}</div><div class="vital-unit">bpm</div></div>{% endif %}
+              {% if exam.respiratory_rate %}<div class="vital-box"><div class="vital-label">Nhịp thở</div><div class="vital-value">{{ exam.respiratory_rate }}</div><div class="vital-unit">lần/phút</div></div>{% endif %}
+              {% if exam.temperature %}<div class="vital-box"><div class="vital-label">Nhiệt độ</div><div class="vital-value {% if exam.temperature >= 38 %}text-danger{% elif exam.temperature >= 37.2 %}text-warning{% else %}text-success{% endif %}">{{ exam.temperature }}</div><div class="vital-unit">°C</div></div>{% endif %}
+              {% if exam.spo2 %}<div class="vital-box"><div class="vital-label">SpO₂</div><div class="vital-value {% if exam.spo2 < 94 %}text-danger{% elif exam.spo2 < 96 %}text-warning{% else %}text-success{% endif %}">{{ exam.spo2 }}</div><div class="vital-unit">%</div></div>{% endif %}
+              {% if exam.weight %}<div class="vital-box"><div class="vital-label">Cân nặng</div><div class="vital-value">{{ exam.weight }}</div><div class="vital-unit">kg</div>{% if exam.bmi %}<div class="small text-muted mt-2">BMI: {{ exam.bmi }}</div>{% endif %}</div>{% endif %}
+            </div>
+          </div>
+        </div>
+
+        <div class="clinical-panel">
+          <div class="clinical-panel-header">
+            <div class="clinical-panel-title"><span class="clinical-panel-icon primary"><i class="fas fa-circle-info"></i></span><span>Thông tin chung</span></div>
+          </div>
+          <div class="clinical-panel-body">
+            <div class="details-list">
+              <div class="details-item"><div class="details-item-label">Bệnh nhân</div><div class="details-item-value">{{ exam.patient.user.get_full_name }}</div></div>
+              <div class="details-item"><div class="details-item-label">Ngày khám</div><div class="details-item-value">{{ exam.exam_date|date:"d/m/Y H:i" }}</div></div>
+              <div class="details-item"><div class="details-item-label">Bác sĩ</div><div class="details-item-value">{{ exam.examined_by.get_full_name|default:"–" }}</div></div>
+              <div class="details-item"><div class="details-item-label">Tái khám</div><div class="details-item-value">{{ exam.follow_up_date|date:"d/m/Y"|default:"Chưa hẹn" }}</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xl-8">
+      <div class="clinical-panel">
+        <div class="clinical-panel-header">
+          <div class="clinical-panel-title"><span class="clinical-panel-icon info"><i class="fas fa-clipboard-list"></i></span><span>Nội dung khám lâm sàng</span></div>
+        </div>
+        <div class="clinical-panel-body">
+          <div class="content-stack">
+            {% if exam.chief_complaint %}<div class="content-block"><div class="content-block-title"><i class="fas fa-comment-medical"></i>Lý do khám và triệu chứng</div><div class="content-block-body">{{ exam.chief_complaint|linebreaksbr }}</div></div>{% endif %}
+            {% if exam.clinical_findings %}<div class="content-block"><div class="content-block-title"><i class="fas fa-magnifying-glass"></i>Kết quả thăm khám lâm sàng</div><div class="content-block-body">{{ exam.clinical_findings|linebreaksbr }}</div></div>{% endif %}
+            {% if exam.diagnosis %}<div class="content-block"><div class="content-block-title"><i class="fas fa-diagnoses text-danger"></i>Chẩn đoán</div><div class="content-block-body fw-semibold text-danger">{{ exam.diagnosis|linebreaksbr }}</div></div>{% endif %}
+            {% if exam.treatment_plan %}<div class="content-block"><div class="content-block-title"><i class="fas fa-clipboard-check text-success"></i>Kế hoạch điều trị</div><div class="content-block-body">{{ exam.treatment_plan|linebreaksbr }}</div></div>{% endif %}
+            {% if exam.prescription %}<div class="content-block"><div class="content-block-title"><i class="fas fa-pills text-warning"></i>Đơn thuốc</div><div class="content-block-body"><pre class="soft-note small mb-0" style="white-space:pre-wrap;">{{ exam.prescription }}</pre></div></div>{% endif %}
+            {% if exam.notes %}<div class="content-block"><div class="content-block-title"><i class="fas fa-sticky-note"></i>Ghi chú thêm</div><div class="content-block-body text-muted">{{ exam.notes|linebreaksbr }}</div></div>{% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

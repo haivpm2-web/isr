@@ -1,0 +1,219 @@
+{% extends "base.html" %}
+{% block title %}Phục hồi chân – {{ profile.user.get_full_name }}{% endblock %}
+{% block page_title %}<i class="fas fa-walking me-2 text-success"></i>Tiến trình phục hồi chân{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+
+  {% if latest %}
+  <!-- Current status banner -->
+  <div class="card shadow-sm mb-4 border-0"
+       style="background: linear-gradient(135deg, #0ea5e9 0%, #16a34a 100%); color: white;">
+    <div class="card-body py-3">
+      <div class="row align-items-center g-3">
+        <div class="col-md-4 text-center">
+          <div class="fw-light small opacity-75 mb-1">Tỷ lệ phục hồi hiện tại</div>
+          <div style="font-size: 3rem; font-weight: 800; line-height: 1;">{{ latest.recovery_percentage }}%</div>
+          <div class="progress mt-2" style="height: 8px;">
+            <div class="progress-bar bg-white" style="width: {{ latest.recovery_percentage }}%"></div>
+          </div>
+        </div>
+        <div class="col-md-8">
+          <div class="row g-2 text-center">
+            <div class="col-4">
+              <div class="p-2 rounded" style="background: rgba(255,255,255,0.15);">
+                <div class="fw-bold fs-4">{{ latest.muscle_strength }}<small class="fs-6">/5</small></div>
+                <div class="small opacity-75">Sức cơ MRC</div>
+              </div>
+            </div>
+            <div class="col-4">
+              <div class="p-2 rounded" style="background: rgba(255,255,255,0.15);">
+                <div class="fw-bold fs-4">{{ latest.range_of_motion }}<small class="fs-6">°</small></div>
+                <div class="small opacity-75">ROM khớp</div>
+              </div>
+            </div>
+            <div class="col-4">
+              <div class="p-2 rounded" style="background: rgba(255,255,255,0.15);">
+                <div class="fw-bold fs-4">{{ latest.pain_level }}<small class="fs-6">/10</small></div>
+                <div class="small opacity-75">Mức đau VAS</div>
+              </div>
+            </div>
+            <div class="col-12 text-center small opacity-75">
+              <i class="fas fa-shoe-prints me-1"></i>{{ latest.get_walking_ability_display }}
+              &nbsp;|&nbsp;
+              <i class="fas fa-leg me-1"></i>{{ latest.get_affected_leg_display }}
+              {% if latest.heart_rate %}&nbsp;|&nbsp;<i class="fas fa-heart-pulse me-1"></i>{{ latest.heart_rate }} bpm{% endif %}
+              {% if latest.spo2 %}&nbsp;|&nbsp;<i class="fas fa-lungs me-1"></i>SpO₂ {{ latest.spo2 }}%{% endif %}
+              &nbsp;|&nbsp;
+              <i class="fas fa-calendar me-1"></i>{{ latest.recorded_at|date:"d/m/Y" }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Swelling indicator -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-6">
+      <div class="card shadow-sm h-100">
+        <div class="card-header bg-white fw-semibold">
+          <i class="fas fa-notes-medical me-2 text-info"></i>Ghi chú vật lý trị liệu
+        </div>
+        <div class="card-body">
+          {% if latest.physical_therapy_notes %}
+          <p class="mb-0">{{ latest.physical_therapy_notes }}</p>
+          {% else %}
+          <p class="text-muted mb-0">Không có ghi chú.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card shadow-sm h-100">
+        <div class="card-header bg-white fw-semibold">
+          <i class="fas fa-stethoscope me-2 text-success"></i>Ghi chú bác sĩ
+        </div>
+        <div class="card-body">
+          {% if latest.doctor_notes %}
+          <p class="mb-0">{{ latest.doctor_notes }}</p>
+          {% else %}
+          <p class="text-muted mb-0">Không có ghi chú.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Trend chart -->
+  {% if chart_data != '[]' %}
+  <div class="card shadow-sm mb-4">
+    <div class="card-header bg-white fw-semibold">
+      <i class="fas fa-chart-line me-2 text-success"></i>Biểu đồ xu hướng phục hồi
+    </div>
+    <div class="card-body">
+      <canvas id="trendChart" height="120"></canvas>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if latest and latest.heart_rate or latest.spo2 or latest.fatigue_index is not None or latest.imu_velocity or latest.gait_speed or latest.plantar_force %}
+  <div class="row g-3 mb-4">
+    {% if latest.heart_rate %}<div class="col-6 col-lg-2"><div class="card shadow-sm h-100"><div class="card-body text-center"><div class="small text-muted">HR</div><div class="fw-bold fs-4">{{ latest.heart_rate }}</div><div class="small text-muted">bpm</div></div></div></div>{% endif %}
+    {% if latest.spo2 %}<div class="col-6 col-lg-2"><div class="card shadow-sm h-100"><div class="card-body text-center"><div class="small text-muted">SpO₂</div><div class="fw-bold fs-4">{{ latest.spo2 }}</div><div class="small text-muted">%</div></div></div></div>{% endif %}
+    {% if latest.fatigue_index is not None %}<div class="col-6 col-lg-2"><div class="card shadow-sm h-100"><div class="card-body text-center"><div class="small text-muted">Fatigue</div><div class="fw-bold fs-4 text-{{ latest.fatigue_color }}">{{ latest.fatigue_index }}</div><div class="small text-muted">/10</div></div></div></div>{% endif %}
+    {% if latest.imu_velocity %}<div class="col-6 col-lg-2"><div class="card shadow-sm h-100"><div class="card-body text-center"><div class="small text-muted">IMU velocity</div><div class="fw-bold fs-4">{{ latest.imu_velocity }}</div><div class="small text-muted">m/s</div></div></div></div>{% endif %}
+    {% if latest.gait_speed %}<div class="col-6 col-lg-2"><div class="card shadow-sm h-100"><div class="card-body text-center"><div class="small text-muted">Gait speed</div><div class="fw-bold fs-4">{{ latest.gait_speed }}</div><div class="small text-muted">m/s</div></div></div></div>{% endif %}
+    {% if latest.plantar_force %}<div class="col-6 col-lg-2"><div class="card shadow-sm h-100"><div class="card-body text-center"><div class="small text-muted">Plantar force</div><div class="fw-bold fs-4">{{ latest.plantar_force }}</div><div class="small text-muted">N</div></div></div></div>{% endif %}
+  </div>
+  {% endif %}
+
+  <!-- History table -->
+  <div class="card shadow-sm">
+    <div class="card-header bg-white fw-semibold">
+      <i class="fas fa-history me-2 text-secondary"></i>Lịch sử ghi nhận
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0 small">
+          <thead class="table-light">
+            <tr>
+              <th>Ngày</th>
+              <th>Chân</th>
+              <th>Phục hồi</th>
+              <th>Sức cơ</th>
+              <th>Biên độ</th>
+              <th>HR</th>
+              <th>SpO₂</th>
+              <th>Fatigue</th>
+              <th>IMU</th>
+              <th>Gait</th>
+              <th>Force</th>
+              <th>Đau</th>
+              <th>Sưng</th>
+              <th>Đi lại</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in records %}
+            <tr>
+              <td>{{ r.recorded_at|date:"d/m/Y" }}</td>
+              <td>{{ r.get_affected_leg_display }}</td>
+              <td>
+                <div class="d-flex align-items-center gap-2">
+                  <div class="progress flex-grow-1" style="height:8px;min-width:60px">
+                    <div class="progress-bar bg-{{ r.recovery_color }}" style="width:{{ r.recovery_percentage }}%"></div>
+                  </div>
+                  <span class="text-{{ r.recovery_color }} fw-semibold">{{ r.recovery_percentage }}%</span>
+                </div>
+              </td>
+              <td><span class="badge bg-{{ r.muscle_color }}">{{ r.muscle_strength }}/5</span></td>
+              <td>{{ r.range_of_motion }}°</td>
+              <td>{{ r.heart_rate|default:"–" }}</td>
+              <td>{% if r.spo2 %}{{ r.spo2 }}%{% else %}–{% endif %}</td>
+              <td>{% if r.fatigue_index is not None %}<span class="badge bg-{{ r.fatigue_color }}">{{ r.fatigue_index }}/10</span>{% else %}–{% endif %}</td>
+              <td class="small">{% if r.imu_velocity %}v {{ r.imu_velocity }}{% endif %}{% if r.imu_acceleration %}<br>a {{ r.imu_acceleration }}{% endif %}{% if not r.imu_velocity and not r.imu_acceleration %}–{% endif %}</td>
+              <td class="small">{% if r.gait_speed %}{{ r.gait_speed }} m/s{% endif %}{% if r.cadence %}<br>{{ r.cadence }} spm{% endif %}{% if r.step_length %}<br>{{ r.step_length }} cm{% endif %}{% if not r.gait_speed and not r.cadence and not r.step_length %}–{% endif %}</td>
+              <td>{% if r.plantar_force %}{{ r.plantar_force }} N{% else %}–{% endif %}</td>
+              <td><span class="badge bg-{{ r.pain_color }}">{{ r.pain_level }}/10</span></td>
+              <td>{{ r.get_swelling_level_display }}</td>
+              <td>{{ r.get_walking_ability_display }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="15" class="text-center text-muted py-4">Chưa có dữ liệu phục hồi.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const cData = {{ chart_data|safe }};
+if (cData.length && document.getElementById('trendChart')) {
+  new Chart(document.getElementById('trendChart'), {
+    type: 'line',
+    data: {
+      labels: cData.map(r => r.recorded_at),
+      datasets: [
+        {
+          label: 'Phục hồi (%)',
+          data: cData.map(r => r.recovery_percentage),
+          borderColor: '#16a34a', backgroundColor: 'rgba(22,163,74,0.08)',
+          fill: true, tension: 0.4, yAxisID: 'y',
+        },
+        {
+          label: 'Sức cơ (x20)',
+          data: cData.map(r => r.muscle_strength * 20),
+          borderColor: '#3b82f6', borderDash: [4,4],
+          fill: false, tension: 0.4, yAxisID: 'y',
+        },
+        {
+          label: 'Đau (x10)',
+          data: cData.map(r => r.pain_level * 10),
+          borderColor: '#ef4444', borderDash: [2,3],
+          fill: false, tension: 0.4, yAxisID: 'y',
+        },
+        {
+          label: 'Fatigue (x10)',
+          data: cData.map(r => (r.fatigue_index ?? 0) * 10),
+          borderColor: '#f59e0b', borderDash: [6,4],
+          fill: false, tension: 0.4, yAxisID: 'y',
+        },
+      ]
+    },
+    options: {
+      responsive: true,
+      scales: { y: { beginAtZero: true, max: 100 } }
+    }
+  });
+}
+</script>
+{% endblock %}

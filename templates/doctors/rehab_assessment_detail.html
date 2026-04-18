@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block title %}Chi tiết đánh giá PHCN {{ ra.assessed_at|date:"d/m/Y" }}{% endblock %}
+{% block page_title %}<i class="fas fa-chart-line me-2 text-success"></i>Chi tiết đánh giá phục hồi chức năng{% endblock %}
+
+{% block content %}
+<div class="container-fluid pb-4">
+  <div class="page-hero mb-4">
+    <div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">
+      <div>
+        <span class="section-kicker"><i class="fas fa-chart-column"></i>Kết quả đánh giá PHCN</span>
+        <h1 class="page-hero-title">Lượng giá ngày {{ ra.assessed_at|date:"d/m/Y" }} cho {{ patient.user.get_full_name }}</h1>
+        <p class="page-hero-text">Trang tổng hợp các thang điểm chức năng và dấu hiệu nền theo nhóm để hỗ trợ đọc nhanh, trao đổi chuyên môn và đối chiếu diễn tiến điều trị.</p>
+      </div>
+      <div class="d-flex align-items-center gap-3 flex-wrap">
+        <span class="hero-patient"><span class="avatar-circle-sm">{{ patient.user.get_full_name|first|upper }}</span>{{ patient.user.get_full_name }}</span>
+        <a href="{% url 'doctors:rehab_assessment_list' patient.id %}" class="btn btn-outline-secondary btn-sm"><i class="fas fa-arrow-left me-1"></i>Danh sách đánh giá</a>
+        {% if user.is_nurse_user %}
+        <a href="{% url 'doctors:add_rehab_assessment' patient.id %}" class="btn btn-success btn-sm"><i class="fas fa-plus me-1"></i>Đánh giá mới</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="score-grid-compact mb-4">
+    {% if ra.barthel_index is not None %}
+    {% with ra.barthel_level as bl %}
+    <div class="score-card-compact"><div class="score-card-name">Barthel Index</div><div class="score-card-value text-{{ bl.0 }}">{{ ra.barthel_index }}</div><div class="score-card-meta">{{ bl.1 }} · /100</div></div>
+    {% endwith %}
+    {% endif %}
+    {% if ra.berg_balance_scale is not None %}
+    {% with ra.berg_level as bb %}
+    <div class="score-card-compact"><div class="score-card-name">Berg Balance</div><div class="score-card-value text-{{ bb.0 }}">{{ ra.berg_balance_scale }}</div><div class="score-card-meta">{{ bb.1 }} · /56</div></div>
+    {% endwith %}
+    {% endif %}
+    {% if ra.nihss_score is not None %}
+    {% with ra.nihss_level as nl %}
+    <div class="score-card-compact"><div class="score-card-name">NIHSS</div><div class="score-card-value text-{{ nl.0 }}">{{ ra.nihss_score }}</div><div class="score-card-meta">{{ nl.1 }} · /42</div></div>
+    {% endwith %}
+    {% endif %}
+    {% if ra.pain_rating is not None %}
+    <div class="score-card-compact"><div class="score-card-name">NRS đau</div><div class="score-card-value {% if ra.pain_rating >= 7 %}text-danger{% elif ra.pain_rating >= 4 %}text-warning{% else %}text-success{% endif %}">{{ ra.pain_rating }}</div><div class="score-card-meta">/10</div></div>
+    {% endif %}
+    {% if ra.fim_score %}
+    <div class="score-card-compact"><div class="score-card-name">FIM</div><div class="score-card-value">{{ ra.fim_score }}</div><div class="score-card-meta">/126</div></div>
+    {% endif %}
+    {% if ra.six_minute_walk %}
+    <div class="score-card-compact"><div class="score-card-name">6-Minute Walk</div><div class="score-card-value text-primary">{{ ra.six_minute_walk }}</div><div class="score-card-meta">mét</div></div>
+    {% endif %}
+  </div>
+
+  <div class="assessment-section-grid">
+    <div class="assessment-box">
+      <div class="assessment-box-title"><i class="fas fa-person-walking text-white bg-primary"></i>Hoạt động hằng ngày</div>
+      {% if ra.barthel_index is not None %}{% with ra.barthel_level as bl %}<div class="assessment-line"><div class="assessment-line-label">Barthel Index</div><div class="assessment-line-value"><span class="score-pill {% if bl.0 == 'success' %}soft-success{% elif bl.0 == 'warning' %}soft-warning{% else %}soft-danger{% endif %}">{{ ra.barthel_index }}/100</span><span class="text-muted small">{{ bl.1 }}</span></div></div>{% endwith %}{% endif %}
+      {% if ra.fim_score %}<div class="assessment-line"><div class="assessment-line-label">FIM Score</div><div class="assessment-line-value"><span class="score-pill soft-neutral">{{ ra.fim_score }}/126</span></div></div>{% endif %}
+      {% if ra.mrs_score is not None %}<div class="assessment-line"><div class="assessment-line-label">Modified Rankin Scale</div><div class="assessment-line-value"><span class="score-pill {% if ra.mrs_score <= 1 %}soft-success{% elif ra.mrs_score <= 3 %}soft-warning{% else %}soft-danger{% endif %}">{{ ra.mrs_score }}/6</span></div></div>{% endif %}
+    </div>
+
+    <div class="assessment-box">
+      <div class="assessment-box-title"><i class="fas fa-hand-fist text-white bg-danger"></i>Vận động và sức cơ</div>
+      {% if ra.fugl_meyer_upper is not None or ra.fugl_meyer_lower is not None %}<div class="assessment-line"><div class="assessment-line-label">Fugl-Meyer</div><div class="assessment-line-value">{% if ra.fugl_meyer_upper is not None %}<span class="score-pill soft-danger">Chi trên {{ ra.fugl_meyer_upper }}/66</span>{% endif %}{% if ra.fugl_meyer_lower is not None %}<span class="score-pill soft-danger">Chi dưới {{ ra.fugl_meyer_lower }}/34</span>{% endif %}{% if ra.fugl_meyer_total is not None %}<span class="score-pill soft-neutral">Tổng {{ ra.fugl_meyer_total }}/100</span>{% endif %}</div></div>{% endif %}
+      {% if ra.rivermead_motor_index is not None %}<div class="assessment-line"><div class="assessment-line-label">Rivermead Motor Index</div><div class="assessment-line-value"><span class="score-pill soft-neutral">{{ ra.rivermead_motor_index }}/15</span></div></div>{% endif %}
+      {% if ra.mas_score is not None %}<div class="assessment-line"><div class="assessment-line-label">MAS Score</div><div class="assessment-line-value"><span class="score-pill soft-neutral">{{ ra.mas_score }}/48</span></div></div>{% endif %}
+      {% if ra.motricity_index_upper is not None or ra.motricity_index_lower is not None %}<div class="assessment-line"><div class="assessment-line-label">Motricity Index</div><div class="assessment-line-value">{% if ra.motricity_index_upper is not None %}<span class="score-pill soft-neutral">Chi trên {{ ra.motricity_index_upper }}</span>{% endif %}{% if ra.motricity_index_lower is not None %}<span class="score-pill soft-neutral">Chi dưới {{ ra.motricity_index_lower }}</span>{% endif %}</div></div>{% endif %}
+      {% if ra.rom_notes %}<div class="assessment-line"><div class="assessment-line-label">Tầm vận động</div><div class="text-muted small">{{ ra.rom_notes }}</div></div>{% endif %}
+    </div>
+
+    <div class="assessment-box">
+      <div class="assessment-box-title"><i class="fas fa-shoe-prints text-white bg-info"></i>Thăng bằng và dáng đi</div>
+      {% if ra.berg_balance_scale is not None %}{% with ra.berg_level as bb %}<div class="assessment-line"><div class="assessment-line-label">Berg Balance Scale</div><div class="assessment-line-value"><span class="score-pill {% if bb.0 == 'success' %}soft-success{% elif bb.0 == 'warning' %}soft-warning{% else %}soft-danger{% endif %}">{{ ra.berg_balance_scale }}/56</span><span class="text-muted small">{{ bb.1 }}</span></div></div>{% endwith %}{% endif %}
+      {% if ra.dynamic_gait_index is not None %}<div class="assessment-line"><div class="assessment-line-label">Dynamic Gait Index</div><div class="assessment-line-value"><span class="score-pill {% if ra.dynamic_gait_index >= 19 %}soft-success{% else %}soft-warning{% endif %}">{{ ra.dynamic_gait_index }}/24</span></div></div>{% endif %}
+      {% if ra.six_minute_walk %}<div class="assessment-line"><div class="assessment-line-label">6-Minute Walk Test</div><div class="assessment-line-value"><span class="score-pill soft-info">{{ ra.six_minute_walk }} m</span></div></div>{% endif %}
+    </div>
+
+    <div class="assessment-box">
+      <div class="assessment-box-title"><i class="fas fa-brain text-dark bg-warning"></i>Đau và thần kinh</div>
+      {% if ra.pain_rating is not None %}<div class="assessment-line"><div class="assessment-line-label">NRS Đau</div><div class="assessment-line-value"><span class="score-pill {% if ra.pain_rating >= 7 %}soft-danger{% elif ra.pain_rating >= 4 %}soft-warning{% else %}soft-success{% endif %}">{{ ra.pain_rating }}/10</span><span class="text-muted small">{% if ra.pain_rating >= 7 %}Đau nặng{% elif ra.pain_rating >= 4 %}Đau vừa{% elif ra.pain_rating >= 1 %}Đau nhẹ{% else %}Không đau{% endif %}</span></div></div>{% endif %}
+      {% if ra.dash_score is not None %}<div class="assessment-line"><div class="assessment-line-label">DASH Score</div><div class="assessment-line-value"><span class="score-pill soft-neutral">{{ ra.dash_score }}/100</span></div></div>{% endif %}
+      {% if ra.nihss_score is not None %}{% with ra.nihss_level as nl %}<div class="assessment-line"><div class="assessment-line-label">NIHSS</div><div class="assessment-line-value"><span class="score-pill {% if nl.0 == 'success' %}soft-success{% elif nl.0 == 'info' %}soft-info{% elif nl.0 == 'warning' %}soft-warning{% else %}soft-danger{% endif %}">{{ ra.nihss_score }}/42</span><span class="text-muted small">{{ nl.1 }}</span></div></div>{% endwith %}{% endif %}
+    </div>
+  </div>
+
+  {% if ra.bp_systolic or ra.heart_rate or ra.respiratory_rate %}
+  <div class="clinical-panel mt-4">
+    <div class="clinical-panel-header">
+      <div class="clinical-panel-title"><span class="clinical-panel-icon success"><i class="fas fa-heartbeat"></i></span><span>Dấu hiệu sinh tồn nền</span></div>
+      <div class="small text-muted">{% if ra.assessed_by %}BS đánh giá: {{ ra.assessed_by.get_full_name }}{% endif %}</div>
+    </div>
+    <div class="clinical-panel-body">
+      <div class="vital-grid">
+        {% if ra.bp_systolic %}<div class="vital-box"><div class="vital-label">Huyết áp</div><div class="vital-value">{{ ra.bp_systolic }}/{{ ra.bp_diastolic }}</div><div class="vital-unit">mmHg</div></div>{% endif %}
+        {% if ra.heart_rate %}<div class="vital-box"><div class="vital-label">Nhịp tim</div><div class="vital-value">{{ ra.heart_rate }}</div><div class="vital-unit">bpm</div></div>{% endif %}
+        {% if ra.respiratory_rate %}<div class="vital-box"><div class="vital-label">Nhịp thở</div><div class="vital-value">{{ ra.respiratory_rate }}</div><div class="vital-unit">lần/phút</div></div>{% endif %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if ra.notes %}
+  <div class="soft-note mt-4">
+    <strong class="text-dark"><i class="fas fa-sticky-note me-2 text-muted"></i>Ghi chú chuyên môn</strong>
+    <p class="mb-0 mt-2 text-muted">{{ ra.notes|linebreaksbr }}</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

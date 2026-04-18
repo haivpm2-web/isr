@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}Lịch sử đánh giá PHCN – {{ patient.user.get_full_name }}{% endblock %}
+{% block page_title %}<i class="fas fa-chart-line me-2 text-success"></i>Lịch sử đánh giá phục hồi chức năng{% endblock %}
+
+{% block content %}
+<div class="container-fluid pb-4">
+  <div class="page-hero mb-4">
+    <div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">
+      <div>
+        <span class="section-kicker"><i class="fas fa-chart-line"></i>Theo dõi chức năng</span>
+        <h1 class="page-hero-title">Lịch sử đánh giá PHCN của {{ patient.user.get_full_name }}</h1>
+        <p class="page-hero-text">Bảng theo dõi tập trung các chỉ số chức năng quan trọng để hỗ trợ đánh giá xu hướng phục hồi giữa các lần lượng giá.</p>
+      </div>
+      <div class="d-flex align-items-center gap-3 flex-wrap">
+        <span class="hero-patient"><span class="avatar-circle-sm">{{ patient.user.get_full_name|first|upper }}</span>{{ patient.user.get_full_name }}</span>
+        <a href="{% url 'doctors:patient_detail' patient.id %}" class="btn btn-outline-secondary btn-sm"><i class="fas fa-arrow-left me-1"></i>Hồ sơ bệnh nhân</a>
+        {% if user.is_nurse_user %}
+        <a href="{% url 'doctors:add_rehab_assessment' patient.id %}" class="btn btn-success btn-sm"><i class="fas fa-plus me-1"></i>Thêm đánh giá</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="metric-strip mb-4">
+    <div class="metric-card"><div class="metric-label">Tổng số đánh giá</div><div class="metric-value">{{ records|length }}</div><div class="metric-subtext">Tất cả các lần lượng giá đã lưu.</div></div>
+    <div class="metric-card"><div class="metric-label">Lần gần nhất</div><div class="metric-value">{% if records %}{{ records.0.assessed_at|date:"d/m" }}{% else %}–{% endif %}</div><div class="metric-subtext">{% if records %}{{ records.0.assessed_at|date:"Y H:i" }}{% else %}Chưa có dữ liệu{% endif %}</div></div>
+    <div class="metric-card"><div class="metric-label">Ngày sinh</div><div class="metric-value">{{ patient.date_of_birth|date:"d/m"|default:"–" }}</div><div class="metric-subtext">{{ patient.date_of_birth|date:"Y"|default:"Chưa rõ" }}</div></div>
+    <div class="metric-card"><div class="metric-label">Giới tính</div><div class="metric-value" style="font-size:1.1rem;">{{ patient.get_gender_display|default:"–" }}</div><div class="metric-subtext">Thông tin nhận dạng trong hồ sơ.</div></div>
+  </div>
+
+  {% if records %}
+  <div class="data-table-card">
+    <div class="table-toolbar">
+      <div>
+        <h2 class="table-toolbar-title">{{ records|length }} lần đánh giá đã ghi nhận</h2>
+        <p class="table-toolbar-subtitle">Các thang điểm quan trọng được mã màu nhẹ để dễ đọc mà vẫn đủ tương phản.</p>
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th class="ps-4">Ngày đánh giá</th>
+            <th class="text-center">Barthel</th>
+            <th class="text-center">FIM</th>
+            <th class="text-center">mRS</th>
+            <th class="text-center">Berg</th>
+            <th class="text-center">NIHSS</th>
+            <th class="text-center">NRS đau</th>
+            <th class="text-center">6MWT</th>
+            <th class="text-end pe-4"></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for a in records %}
+          <tr>
+            <td class="ps-4">
+              <div class="fw-semibold text-dark">{{ a.assessed_at|date:"d/m/Y" }}</div>
+              <small class="text-muted">{{ a.assessed_at|date:"H:i" }}</small>
+            </td>
+            <td class="text-center">{% if a.barthel_index is not None %}{% with a.barthel_level as bl %}<span class="score-pill {% if bl.0 == 'success' %}soft-success{% elif bl.0 == 'warning' %}soft-warning{% else %}soft-danger{% endif %}">{{ a.barthel_index }}</span>{% endwith %}{% else %}<span class="text-muted">–</span>{% endif %}</td>
+            <td class="text-center">{% if a.fim_score %}<span class="score-pill soft-neutral">{{ a.fim_score }}</span>{% else %}<span class="text-muted">–</span>{% endif %}</td>
+            <td class="text-center">{% if a.mrs_score is not None %}<span class="score-pill {% if a.mrs_score <= 1 %}soft-success{% elif a.mrs_score <= 3 %}soft-warning{% else %}soft-danger{% endif %}">{{ a.mrs_score }}</span>{% else %}<span class="text-muted">–</span>{% endif %}</td>
+            <td class="text-center">{% if a.berg_balance_scale is not None %}{% with a.berg_level as bb %}<span class="score-pill {% if bb.0 == 'success' %}soft-success{% elif bb.0 == 'warning' %}soft-warning{% else %}soft-danger{% endif %}">{{ a.berg_balance_scale }}</span>{% endwith %}{% else %}<span class="text-muted">–</span>{% endif %}</td>
+            <td class="text-center">{% if a.nihss_score is not None %}{% with a.nihss_level as nl %}<span class="score-pill {% if nl.0 == 'success' %}soft-success{% elif nl.0 == 'info' %}soft-info{% elif nl.0 == 'warning' %}soft-warning{% else %}soft-danger{% endif %}">{{ a.nihss_score }}</span>{% endwith %}{% else %}<span class="text-muted">–</span>{% endif %}</td>
+            <td class="text-center">{% if a.pain_rating is not None %}<span class="score-pill {% if a.pain_rating >= 7 %}soft-danger{% elif a.pain_rating >= 4 %}soft-warning{% else %}soft-success{% endif %}">{{ a.pain_rating }}</span>{% else %}<span class="text-muted">–</span>{% endif %}</td>
+            <td class="text-center">{% if a.six_minute_walk %}<span class="score-pill soft-info">{{ a.six_minute_walk }} m</span>{% else %}<span class="text-muted">–</span>{% endif %}</td>
+            <td class="text-end pe-4"><a href="{% url 'doctors:rehab_assessment_detail' patient.id a.id %}" class="btn btn-outline-secondary btn-sm"><i class="fas fa-eye me-1"></i>Xem</a></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% else %}
+  <div class="empty-state-card">
+    <i class="fas fa-chart-line fa-3x mb-3 opacity-25 d-block"></i>
+    <p class="mb-3">Chưa có đánh giá phục hồi chức năng nào.</p>
+    {% if user.is_nurse_user %}
+    <a href="{% url 'doctors:add_rehab_assessment' patient.id %}" class="btn btn-success"><i class="fas fa-plus me-1"></i>Thêm đánh giá đầu tiên</a>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

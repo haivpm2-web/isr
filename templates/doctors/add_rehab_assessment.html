@@ -1,0 +1,276 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% block title %}Đánh giá phục hồi chức năng{% endblock %}
+{% block page_title %}<i class="fas fa-chart-line me-2 text-success"></i>Đánh giá phục hồi chức năng{% endblock %}
+
+{% block content %}
+<div class="container-fluid pb-4">
+  <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
+    <div>
+      <span class="section-kicker"><i class="fas fa-clipboard-check"></i>Mẫu đánh giá chuẩn hóa</span>
+      <h2 class="h4 fw-bold mt-3 mb-1 text-dark">Đánh giá PHCN cho {{ patient.user.get_full_name }}</h2>
+      <p class="text-muted mb-0">Ghi nhận theo nhóm chức năng để bác sĩ dễ theo dõi diễn tiến và so sánh giữa các lần tái lượng giá.</p>
+    </div>
+    <div class="d-flex align-items-center gap-3 flex-wrap">
+      <span class="profile-chip">
+        <span class="avatar-circle-sm me-2">{{ patient.user.get_full_name|first|upper }}</span>
+        {{ patient.user.get_full_name }}
+      </span>
+      <a href="{% url 'doctors:patient_detail' patient.id %}" class="btn btn-outline-secondary btn-sm">
+        <i class="fas fa-arrow-left me-1"></i>Hồ sơ bệnh nhân
+      </a>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-xl-8">
+      <div class="form-shell">
+        <div class="form-intro-card mb-4">
+          <div class="d-flex align-items-start gap-3">
+            <span class="clinical-stat-icon primary"><i class="fas fa-notes-medical"></i></span>
+            <div>
+              <div class="form-intro-title">Biểu mẫu đánh giá đa lĩnh vực</div>
+              <p class="form-intro-text">Ưu tiên nhập các chỉ số cốt lõi trước. Những mục chưa có dữ liệu có thể để trống để cập nhật ở lần đánh giá tiếp theo.</p>
+            </div>
+          </div>
+        </div>
+
+        <form method="post" novalidate>
+          {% csrf_token %}
+
+          <div class="accordion isr-accordion" id="rehabAccordion">
+            <div class="accordion-item">
+              <h2 class="accordion-header">
+                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#acc-adl">
+                  <span class="acc-icon bg-primary"><i class="fas fa-person-walking"></i></span>
+                  <div>
+                    <div class="acc-title">Hoạt động hằng ngày</div>
+                    <div class="acc-sub">Barthel Index · FIM · Modified Rankin Scale</div>
+                  </div>
+                </button>
+              </h2>
+              <div id="acc-adl" class="accordion-collapse collapse show" data-bs-parent="#rehabAccordion">
+                <div class="accordion-body">
+                  <div class="row g-3">
+                    <div class="col-md-4">
+                      {{ form.barthel_index|as_crispy_field }}
+                      <div class="form-hint">0 → 100. Điểm cao hơn thể hiện mức độ độc lập cao hơn.</div>
+                    </div>
+                    <div class="col-md-4">
+                      {{ form.fim_score|as_crispy_field }}
+                      <div class="form-hint">Functional Independence Measure, khoảng 18 → 126.</div>
+                    </div>
+                    <div class="col-md-4">
+                      {{ form.mrs_score|as_crispy_field }}
+                      <div class="form-hint">Modified Rankin Scale, 0 → 6.</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="accordion-item">
+              <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#acc-motor">
+                  <span class="acc-icon bg-danger"><i class="fas fa-hand-fist"></i></span>
+                  <div>
+                    <div class="acc-title">Vận động và sức cơ</div>
+                    <div class="acc-sub">Fugl-Meyer · Rivermead · MAS · Motricity · ROM</div>
+                  </div>
+                </button>
+              </h2>
+              <div id="acc-motor" class="accordion-collapse collapse" data-bs-parent="#rehabAccordion">
+                <div class="accordion-body">
+                  <div class="row g-3">
+                    <div class="col-md-3">
+                      {{ form.fugl_meyer_upper|as_crispy_field }}
+                      <div class="form-hint">Chi trên, thang 0 → 66.</div>
+                    </div>
+                    <div class="col-md-3">
+                      {{ form.fugl_meyer_lower|as_crispy_field }}
+                      <div class="form-hint">Chi dưới, thang 0 → 34.</div>
+                    </div>
+                    <div class="col-md-3">
+                      {{ form.rivermead_motor_index|as_crispy_field }}
+                      <div class="form-hint">Rivermead Mobility Index, 0 → 15.</div>
+                    </div>
+                    <div class="col-md-3">
+                      {{ form.mas_score|as_crispy_field }}
+                      <div class="form-hint">Motor Assessment Scale, 0 → 48.</div>
+                    </div>
+                    <div class="col-md-6">
+                      {{ form.motricity_index_upper|as_crispy_field }}
+                    </div>
+                    <div class="col-md-6">
+                      {{ form.motricity_index_lower|as_crispy_field }}
+                    </div>
+                    <div class="col-md-12">{{ form.rom_notes|as_crispy_field }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="accordion-item">
+              <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#acc-balance">
+                  <span class="acc-icon bg-info"><i class="fas fa-shoe-prints"></i></span>
+                  <div>
+                    <div class="acc-title">Thăng bằng và dáng đi</div>
+                    <div class="acc-sub">Berg Balance · Dynamic Gait · Six-Minute Walk</div>
+                  </div>
+                </button>
+              </h2>
+              <div id="acc-balance" class="accordion-collapse collapse" data-bs-parent="#rehabAccordion">
+                <div class="accordion-body">
+                  <div class="row g-3">
+                    <div class="col-md-4">
+                      {{ form.berg_balance_scale|as_crispy_field }}
+                      <div class="form-hint">0 → 56. Dưới 45 điểm thường gợi ý tăng nguy cơ té ngã.</div>
+                    </div>
+                    <div class="col-md-4">
+                      {{ form.dynamic_gait_index|as_crispy_field }}
+                      <div class="form-hint">Dynamic Gait Index, 0 → 24.</div>
+                    </div>
+                    <div class="col-md-4">
+                      {{ form.six_minute_walk|as_crispy_field }}
+                      <div class="form-hint">Quãng đường đi bộ 6 phút, đơn vị mét.</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="accordion-item">
+              <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#acc-pain">
+                  <span class="acc-icon bg-warning"><i class="fas fa-brain"></i></span>
+                  <div>
+                    <div class="acc-title">Đau và thần kinh</div>
+                    <div class="acc-sub">NRS · DASH · NIHSS</div>
+                  </div>
+                </button>
+              </h2>
+              <div id="acc-pain" class="accordion-collapse collapse" data-bs-parent="#rehabAccordion">
+                <div class="accordion-body">
+                  <div class="row g-3">
+                    <div class="col-md-4">
+                      {{ form.pain_rating|as_crispy_field }}
+                      <div class="form-hint">Thang đau số 0 → 10.</div>
+                    </div>
+                    <div class="col-md-4">
+                      {{ form.dash_score|as_crispy_field }}
+                      <div class="form-hint">DASH, 0 → 100.</div>
+                    </div>
+                    <div class="col-md-4">
+                      {{ form.nihss_score|as_crispy_field }}
+                      <div class="form-hint">NIHSS, 0 → 42 cho đánh giá thần kinh sau đột quỵ.</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="accordion-item">
+              <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#acc-vitals">
+                  <span class="acc-icon bg-success"><i class="fas fa-heart-pulse"></i></span>
+                  <div>
+                    <div class="acc-title">Dấu hiệu sinh tồn nền</div>
+                    <div class="acc-sub">Huyết áp · Nhịp tim · Nhịp thở</div>
+                  </div>
+                </button>
+              </h2>
+              <div id="acc-vitals" class="accordion-collapse collapse" data-bs-parent="#rehabAccordion">
+                <div class="accordion-body">
+                  <div class="row g-3">
+                    <div class="col-6 col-md-3">{{ form.bp_systolic|as_crispy_field }}</div>
+                    <div class="col-6 col-md-3">{{ form.bp_diastolic|as_crispy_field }}</div>
+                    <div class="col-6 col-md-3">{{ form.heart_rate|as_crispy_field }}</div>
+                    <div class="col-6 col-md-3">{{ form.respiratory_rate|as_crispy_field }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card mt-4 border-0 shadow-sm">
+            <div class="card-header bg-white">
+              <span class="section-kicker"><i class="fas fa-file-signature"></i>Hoàn tất hồ sơ</span>
+            </div>
+            <div class="card-body">
+              <div class="row g-3">
+                <div class="col-md-8">{{ form.notes|as_crispy_field }}</div>
+                <div class="col-md-4">{{ form.assessed_at|as_crispy_field }}</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="action-bar">
+            <div class="action-note">Khuyến nghị lưu ngay sau khi hoàn tất nhóm chỉ số cốt lõi để tránh thiếu dữ liệu đánh giá.</div>
+            <div class="d-flex gap-2">
+              <a href="{% url 'doctors:patient_detail' patient.id %}" class="btn btn-outline-secondary px-4">Hủy</a>
+              <button type="submit" class="btn btn-success px-4">
+                <i class="fas fa-save me-2"></i>Lưu đánh giá
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="col-xl-4">
+      <div class="sticky-summary d-flex flex-column gap-4">
+        <div class="card border-0 shadow-sm">
+          <div class="card-header bg-white">
+            <span class="section-kicker"><i class="fas fa-info-circle"></i>Tham chiếu nhanh</span>
+          </div>
+          <div class="card-body p-0">
+            <div class="ref-table">
+              <div class="ref-section">
+                <div class="ref-title">Barthel Index</div>
+                <div class="ref-row"><span class="ref-badge bg-success">81–100</span><span>Độc lập</span></div>
+                <div class="ref-row"><span class="ref-badge bg-warning text-dark">61–80</span><span>Phụ thuộc nhẹ</span></div>
+                <div class="ref-row"><span class="ref-badge bg-orange">41–60</span><span>Phụ thuộc vừa</span></div>
+                <div class="ref-row"><span class="ref-badge bg-danger">0–40</span><span>Phụ thuộc nặng</span></div>
+              </div>
+              <div class="ref-section">
+                <div class="ref-title">Berg Balance Scale</div>
+                <div class="ref-row"><span class="ref-badge bg-success">45–56</span><span>Ổn định tốt</span></div>
+                <div class="ref-row"><span class="ref-badge bg-warning text-dark">35–44</span><span>Nguy cơ té ngã</span></div>
+                <div class="ref-row"><span class="ref-badge bg-danger">0–34</span><span>Nguy cơ cao</span></div>
+              </div>
+              <div class="ref-section">
+                <div class="ref-title">NIHSS</div>
+                <div class="ref-row"><span class="ref-badge bg-success">0</span><span>Bình thường</span></div>
+                <div class="ref-row"><span class="ref-badge bg-info">1–4</span><span>Nhẹ</span></div>
+                <div class="ref-row"><span class="ref-badge bg-warning text-dark">5–15</span><span>Vừa</span></div>
+                <div class="ref-row"><span class="ref-badge bg-danger">16–42</span><span>Nặng</span></div>
+              </div>
+              <div class="ref-section border-0">
+                <div class="ref-title">NRS Đau</div>
+                <div class="ref-row"><span class="ref-badge bg-success">0–3</span><span>Không hoặc nhẹ</span></div>
+                <div class="ref-row"><span class="ref-badge bg-warning text-dark">4–6</span><span>Trung bình</span></div>
+                <div class="ref-row"><span class="ref-badge bg-danger">7–10</span><span>Nặng</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card border-0 shadow-sm">
+          <div class="card-header bg-white">
+            <span class="section-kicker"><i class="fas fa-list-check"></i>Checklist chất lượng</span>
+          </div>
+          <div class="card-body">
+            <div class="d-flex flex-column gap-3 small text-muted">
+              <div><i class="fas fa-check-circle text-success me-2"></i>Ghi ngày đánh giá cùng thời điểm đo thực tế.</div>
+              <div><i class="fas fa-check-circle text-success me-2"></i>Ưu tiên các thang đo có giá trị theo dõi dọc.</div>
+              <div><i class="fas fa-check-circle text-success me-2"></i>Ghi chú ngắn nếu có yếu tố ảnh hưởng kết quả đo.</div>
+              <div><i class="fas fa-check-circle text-success me-2"></i>Đối chiếu điểm đau và thăng bằng trước khi kết luận mức độ an toàn vận động.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

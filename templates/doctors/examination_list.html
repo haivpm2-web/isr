@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %}Lịch sử khám – {{ patient.user.get_full_name }}{% endblock %}
+{% block page_title %}<i class="fas fa-calendar-check me-2 text-info"></i>Lịch sử khám{% endblock %}
+
+{% block content %}
+<div class="container-fluid pb-4">
+  <div class="page-hero mb-4">
+    <div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">
+      <div>
+        <span class="section-kicker"><i class="fas fa-stethoscope"></i>Lịch sử khám</span>
+        <h1 class="page-hero-title">Theo dõi các lần khám của {{ patient.user.get_full_name }}</h1>
+        <p class="page-hero-text">Bảng tổng hợp hiển thị nhanh thời gian khám, dấu hiệu sinh tồn chính, chẩn đoán và kế hoạch tái khám để bác sĩ rà soát tiến trình.</p>
+      </div>
+      <div class="d-flex align-items-center gap-3 flex-wrap">
+        <span class="hero-patient"><span class="avatar-circle-sm">{{ patient.user.get_full_name|first|upper }}</span>{{ patient.user.get_full_name }}</span>
+        <a href="{% url 'doctors:patient_detail' patient.id %}" class="btn btn-outline-secondary btn-sm"><i class="fas fa-arrow-left me-1"></i>Hồ sơ bệnh nhân</a>
+        {% if user.is_nurse_user %}
+        <a href="{% url 'doctors:add_examination' patient.id %}" class="btn btn-info text-white btn-sm"><i class="fas fa-plus me-1"></i>Thêm lịch khám</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="metric-strip mb-4">
+    <div class="metric-card">
+      <div class="metric-label">Tổng số lần khám</div>
+      <div class="metric-value">{{ records|length }}</div>
+      <div class="metric-subtext">Tất cả bản ghi thăm khám đang có trong hồ sơ.</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Khám gần nhất</div>
+      <div class="metric-value">{% if records %}{{ records.0.exam_date|date:"d/m" }}{% else %}–{% endif %}</div>
+      <div class="metric-subtext">{% if records %}{{ records.0.exam_date|date:"Y H:i" }}{% else %}Chưa có dữ liệu{% endif %}</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Chẩn đoán hiện tại</div>
+      <div class="metric-value" style="font-size:1rem;line-height:1.35;">{{ patient.diagnosis|default:"Chưa cập nhật"|truncatechars:40 }}</div>
+      <div class="metric-subtext">Lấy từ hồ sơ bệnh nhân hiện tại.</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Ngày nhập viện</div>
+      <div class="metric-value">{{ patient.admission_date|date:"d/m"|default:"–" }}</div>
+      <div class="metric-subtext">{{ patient.admission_date|date:"Y"|default:"Chưa rõ" }}</div>
+    </div>
+  </div>
+
+  {% if records %}
+  <div class="data-table-card">
+    <div class="table-toolbar">
+      <div>
+        <h2 class="table-toolbar-title">{{ records|length }} lần khám đã ghi nhận</h2>
+        <p class="table-toolbar-subtitle">Sắp xếp theo thời gian gần nhất để phục vụ đối chiếu nhanh trong buổi khám.</p>
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th class="ps-4">#</th>
+            <th>Ngày khám</th>
+            <th>Bác sĩ</th>
+            <th>Huyết áp</th>
+            <th>Nhịp tim</th>
+            <th>Chẩn đoán</th>
+            <th>Tái khám</th>
+            <th class="text-end pe-4"></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for e in records %}
+          <tr>
+            <td class="ps-4"><span class="row-index">{{ forloop.counter }}</span></td>
+            <td>
+              <div class="fw-semibold text-dark">{{ e.exam_date|date:"d/m/Y" }}</div>
+              <div class="small text-muted">{{ e.exam_date|date:"H:i" }}</div>
+            </td>
+            <td class="small text-muted">{{ e.examined_by.get_full_name|default:"–" }}</td>
+            <td>
+              {% if e.blood_pressure_systolic %}
+              {% with e.bp_status as sts %}
+              <span class="score-pill {% if sts.0 == 'success' %}soft-success{% elif sts.0 == 'warning' %}soft-warning{% else %}soft-danger{% endif %}">{{ e.blood_pressure_systolic }}/{{ e.blood_pressure_diastolic }}</span>
+              {% endwith %}
+              {% else %}<span class="text-muted">–</span>{% endif %}
+            </td>
+            <td>
+              {% if e.heart_rate %}
+              <span class="score-pill {% if e.heart_rate > 100 %}soft-danger{% elif e.heart_rate < 60 %}soft-warning{% else %}soft-success{% endif %}">{{ e.heart_rate }} bpm</span>
+              {% else %}<span class="text-muted">–</span>{% endif %}
+            </td>
+            <td class="small">{{ e.diagnosis|default:"–"|truncatechars:52 }}</td>
+            <td class="small text-muted">{{ e.follow_up_date|date:"d/m/Y"|default:"–" }}</td>
+            <td class="text-end pe-4"><a href="{% url 'doctors:examination_detail' patient.id e.id %}" class="btn btn-outline-secondary btn-sm"><i class="fas fa-eye me-1"></i>Xem</a></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% else %}
+  <div class="empty-state-card">
+    <i class="fas fa-calendar-times fa-3x mb-3 opacity-25 d-block"></i>
+    <p class="mb-3">Chưa có lịch sử khám cho bệnh nhân này.</p>
+    {% if user.is_nurse_user %}
+    <a href="{% url 'doctors:add_examination' patient.id %}" class="btn btn-info text-white"><i class="fas fa-plus me-1"></i>Tạo lần khám đầu tiên</a>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

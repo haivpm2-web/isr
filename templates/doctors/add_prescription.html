@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% block title %}Cấp thuốc – {{ patient.user.get_full_name }}{% endblock %}
+{% block page_title %}<i class="fas fa-prescription-bottle-medical me-2 text-primary"></i>Cấp thuốc và in đơn{% endblock %}
+
+{% block content %}
+<div class="container-fluid pb-4">
+  <div class="page-hero mb-4">
+    <div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">
+      <div>
+        <span class="section-kicker"><i class="fas fa-file-prescription"></i>Chỉ định thuốc</span>
+        <h1 class="page-hero-title">Tạo đơn thuốc cho {{ patient.user.get_full_name }}</h1>
+        <p class="page-hero-text">Biểu mẫu này tách riêng phần thuốc khỏi lần khám để bác sĩ có thể cấp thuốc, bổ sung hướng dẫn dùng và in ngay thành đơn mang cho bệnh nhân.</p>
+      </div>
+      <div class="d-flex align-items-center gap-3 flex-wrap">
+        <span class="hero-patient"><span class="avatar-circle-sm">{{ patient.user.get_full_name|first|upper }}</span>{{ patient.user.get_full_name }}</span>
+        <a href="{% url 'doctors:patient_detail' patient.id %}" class="btn btn-outline-secondary btn-sm"><i class="fas fa-arrow-left me-1"></i>Hồ sơ bệnh nhân</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-xl-8">
+      <div class="form-shell">
+        <form method="post" novalidate>
+          {% csrf_token %}
+          {% if current_exam %}<input type="hidden" name="exam_id" value="{{ current_exam.id }}">{% endif %}
+
+          <div class="clinical-panel mb-4">
+            <div class="clinical-panel-header">
+              <div class="clinical-panel-title">
+                <span class="clinical-panel-icon primary"><i class="fas fa-calendar-plus"></i></span>
+                <span>Thông tin chỉ định</span>
+              </div>
+            </div>
+            <div class="clinical-panel-body">
+              <div class="row g-3">
+                <div class="col-md-4"><label class="form-label fw-semibold">{{ form.issued_at.label }}</label>{{ form.issued_at }}</div>
+                <div class="col-md-4"><label class="form-label fw-semibold">{{ form.follow_up_date.label }}</label>{{ form.follow_up_date }}</div>
+                <div class="col-12"><label class="form-label fw-semibold">{{ form.diagnosis.label }}</label>{{ form.diagnosis }}</div>
+                <div class="col-12"><label class="form-label fw-semibold">{{ form.clinical_notes.label }}</label>{{ form.clinical_notes }}</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="clinical-panel mb-4">
+            <div class="clinical-panel-header">
+              <div class="clinical-panel-title">
+                <span class="clinical-panel-icon danger"><i class="fas fa-heart-pulse"></i></span>
+                <span>Sinh hiệu và chỉ số kèm theo</span>
+              </div>
+            </div>
+            <div class="clinical-panel-body">
+              <div class="row g-3">
+                <div class="col-6 col-md-3"><label class="form-label small fw-semibold">{{ form.blood_pressure_systolic.label }}</label>{{ form.blood_pressure_systolic }}</div>
+                <div class="col-6 col-md-3"><label class="form-label small fw-semibold">{{ form.blood_pressure_diastolic.label }}</label>{{ form.blood_pressure_diastolic }}</div>
+                <div class="col-6 col-md-3"><label class="form-label small fw-semibold">{{ form.heart_rate.label }}</label>{{ form.heart_rate }}</div>
+                <div class="col-6 col-md-3"><label class="form-label small fw-semibold">{{ form.respiratory_rate.label }}</label>{{ form.respiratory_rate }}</div>
+                <div class="col-6 col-md-3"><label class="form-label small fw-semibold">{{ form.temperature.label }}</label>{{ form.temperature }}</div>
+                <div class="col-6 col-md-3"><label class="form-label small fw-semibold">{{ form.spo2.label }}</label>{{ form.spo2 }}</div>
+                <div class="col-6 col-md-3"><label class="form-label small fw-semibold">{{ form.weight.label }}</label>{{ form.weight }}</div>
+                <div class="col-6 col-md-3"><label class="form-label small fw-semibold">{{ form.pain_score.label }}</label>{{ form.pain_score }}</div>
+                <div class="col-md-4"><label class="form-label small fw-semibold">{{ form.blood_glucose.label }}</label>{{ form.blood_glucose }}</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="clinical-panel mb-4">
+            <div class="clinical-panel-header">
+              <div class="clinical-panel-title">
+                <span class="clinical-panel-icon success"><i class="fas fa-pills"></i></span>
+                <span>Nội dung toa thuốc</span>
+              </div>
+            </div>
+            <div class="clinical-panel-body">
+              <div class="row g-3">
+                <div class="col-12"><label class="form-label fw-semibold">{{ form.medications.label }}</label>{{ form.medications }}</div>
+                <div class="col-md-6"><label class="form-label fw-semibold">{{ form.dosage_instructions.label }}</label>{{ form.dosage_instructions }}</div>
+                <div class="col-md-6"><label class="form-label fw-semibold">{{ form.advice.label }}</label>{{ form.advice }}</div>
+                <div class="col-12"><label class="form-label fw-semibold">{{ form.notes.label }}</label>{{ form.notes }}</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="action-bar mt-0">
+            <div class="action-note">Sau khi lưu, hệ thống mở trang chi tiết đơn để bác sĩ xem lại và in trực tiếp.</div>
+            <div class="d-flex gap-2">
+              <a href="{% url 'doctors:patient_detail' patient.id %}" class="btn btn-outline-secondary px-4">Hủy</a>
+              <button type="submit" class="btn btn-primary px-4"><i class="fas fa-save me-2"></i>Lưu đơn thuốc</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="col-xl-4">
+      <div class="sticky-summary d-flex flex-column gap-4">
+        <div class="clinical-panel">
+          <div class="clinical-panel-header">
+            <div class="clinical-panel-title">
+              <span class="clinical-panel-icon info"><i class="fas fa-link"></i></span>
+              <span>Nguồn dữ liệu gợi ý</span>
+            </div>
+          </div>
+          <div class="clinical-panel-body">
+            <div class="details-list">
+              <div class="details-item"><div class="details-item-label">Bệnh nhân</div><div class="details-item-value">{{ patient.user.get_full_name }}</div></div>
+              {% if current_exam %}<div class="details-item"><div class="details-item-label">Lần khám gắn kèm</div><div class="details-item-value">{{ current_exam.exam_date|date:"d/m/Y H:i" }}</div></div>{% endif %}
+              {% if latest_exam %}<div class="details-item"><div class="details-item-label">Khám gần nhất</div><div class="details-item-value">{{ latest_exam.exam_date|date:"d/m/Y H:i" }}</div></div>{% endif %}
+              <div class="details-item"><div class="details-item-label">Chẩn đoán hồ sơ</div><div class="details-item-value">{{ patient.diagnosis|default:"Chưa cập nhật" }}</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="clinical-panel">
+          <div class="clinical-panel-header">
+            <div class="clinical-panel-title">
+              <span class="clinical-panel-icon warning"><i class="fas fa-lightbulb"></i></span>
+              <span>Gợi ý nội dung</span>
+            </div>
+          </div>
+          <div class="clinical-panel-body small text-muted d-flex flex-column gap-3">
+            <div><i class="fas fa-check-circle text-success me-2"></i>Có thể ghi từng thuốc trên mỗi dòng theo cấu trúc: tên thuốc, hàm lượng, số lượng.</div>
+            <div><i class="fas fa-check-circle text-success me-2"></i>Phần cách dùng nên nêu rõ số lần trong ngày, thời điểm dùng và số ngày điều trị.</div>
+            <div><i class="fas fa-check-circle text-success me-2"></i>Nếu bệnh nhân có tăng huyết áp, hạ SpO₂, tăng đau hoặc đường huyết bất thường, nên ghi ngay vào sinh hiệu đi kèm trên đơn.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

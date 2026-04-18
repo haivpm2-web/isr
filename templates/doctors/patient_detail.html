@@ -1,0 +1,571 @@
+{% extends "base.html" %}
+{% block title %}{{ patient.user.get_full_name }} – Hồ sơ bệnh nhân{% endblock %}
+{% block page_title %}<i class="fas fa-user-injured me-2 text-primary"></i>Hồ sơ bệnh nhân{% endblock %}
+
+{% block content %}
+<div class="container-fluid pb-4">
+  <div class="dashboard-hero mb-4">
+    <div class="dashboard-hero-main d-flex justify-content-between align-items-start gap-3 flex-wrap">
+      <div>
+        <div class="d-flex align-items-center gap-3">
+          <span class="dashboard-hero-icon"><i class="fas fa-user-injured"></i></span>
+          <div>
+            <div class="dashboard-eyebrow">HỒ SƠ ĐIỀU TRỊ CHI TIẾT</div>
+            <h2 class="dashboard-hero-title mb-1">{{ patient.user.get_full_name }}</h2>
+            <div class="d-flex flex-wrap gap-3 text-light small opacity-90">
+              <span><i class="fas fa-venus-mars me-1"></i>{{ patient.get_gender_display|default:"–" }}</span>
+              <span><i class="fas fa-tint me-1"></i>{{ patient.blood_type|default:"–" }}</span>
+              <span><i class="fas fa-calendar-check me-1"></i>{{ patient.admission_date|date:"d/m/Y"|default:"Chưa rõ" }}</span>
+              <span><i class="fas fa-bed-pulse me-1"></i>{{ patient.get_treatment_status_display }}</span>
+              {% if patient.doctor %}<span><i class="fas fa-user-doctor me-1"></i>BS. {{ patient.doctor.user.get_full_name }}</span>{% endif %}
+            </div>
+          </div>
+        </div>
+        <div class="dashboard-chip-row mt-3">
+          {% if latest_ecg %}<span class="dashboard-chip danger"><i class="fas fa-heart-pulse me-1"></i>{{ latest_ecg.heart_rate }} bpm</span>{% endif %}
+          {% if latest_recovery %}<span class="dashboard-chip accent"><i class="fas fa-person-walking me-1"></i>{{ latest_recovery.recovery_percentage }}% phục hồi</span>{% endif %}
+          {% if latest_recovery %}<span class="dashboard-chip neutral"><i class="fas fa-face-grimace me-1"></i>Đau {{ latest_recovery.pain_level }}/10</span>{% endif %}
+        </div>
+        {% if patient.diagnosis %}
+        <div class="dashboard-inline-note mt-3 text-white-50"><i class="fas fa-notes-medical me-1"></i>{{ patient.diagnosis }}</div>
+        {% endif %}
+      </div>
+      <div class="profile-header-actions">
+      <a href="{% url 'doctors:patient_list' %}" class="btn btn-outline-secondary btn-sm">
+        <i class="fas fa-arrow-left me-1"></i>Danh sách
+      </a>
+      {% if user.is_nurse_user %}
+      <div class="dropdown">
+        <button class="btn btn-primary btn-sm dropdown-toggle" data-bs-toggle="dropdown">
+          <i class="fas fa-plus me-1"></i>Thêm dữ liệu
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end shadow border-0">
+          <li><a class="dropdown-item" href="{% url 'doctors:add_examination' patient.id %}"><i class="fas fa-stethoscope me-2 text-info"></i>Lịch khám mới</a></li>
+          <li><a class="dropdown-item" href="{% url 'doctors:add_rehab_assessment' patient.id %}"><i class="fas fa-chart-line me-2 text-success"></i>Đánh giá PHCN</a></li>
+          <li><a class="dropdown-item" href="{% url 'doctors:add_ecg' patient.id %}"><i class="fas fa-wave-square me-2 text-danger"></i>Kết quả ECG</a></li>
+          <li><a class="dropdown-item" href="{% url 'doctors:add_recovery' patient.id %}"><i class="fas fa-walking me-2 text-warning"></i>Phục hồi chân</a></li>
+          <li><hr class="dropdown-divider"></li>
+          <li><a class="dropdown-item" href="{% url 'doctors:edit_patient_bio' patient.id %}"><i class="fas fa-notes-medical me-2 text-primary"></i>Cập nhật tiểu sử</a></li>
+        </ul>
+      </div>
+      {% elif user.is_doctor %}
+      <a href="{% url 'doctors:add_prescription' patient.id %}" class="btn btn-primary btn-sm"><i class="fas fa-prescription-bottle-medical me-1"></i>Kê đơn thuốc</a>
+      {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="patient-status-panel mb-4">
+    <div class="patient-status-header">
+      <div>
+        <div class="dashboard-eyebrow text-primary">CASE SUMMARY</div>
+        <h5 class="mb-1">Tín hiệu lâm sàng nổi bật</h5>
+        <p class="text-muted mb-0">Tổng hợp nhanh các cờ đỏ và diễn biến mới nhất để quyết định ưu tiên xử lý.</p>
+      </div>
+    </div>
+    <div class="patient-alert-list mt-3">
+      {% for flag in case_flags %}
+      <div class="patient-alert-pill {{ flag.level }}">
+        <i class="fas {{ flag.icon }}"></i>
+        <span>{{ flag.text }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-md-4">
+      <div class="case-summary-card h-100">
+        <div class="case-summary-label">ECG mới nhất</div>
+        <div class="case-summary-value {% if latest_ecg and latest_ecg.is_abnormal %}text-danger{% else %}text-success{% endif %}">{% if latest_ecg %}{{ latest_ecg.heart_rate }} bpm{% else %}--{% endif %}</div>
+        <div class="case-summary-meta">{% if latest_ecg %}{{ latest_ecg.get_rhythm_display }}{% else %}Chưa có ECG{% endif %}</div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="case-summary-card h-100">
+        <div class="case-summary-label">Phục hồi mới nhất</div>
+        <div class="case-summary-value text-primary">{% if latest_recovery %}{{ latest_recovery.recovery_percentage }}%{% else %}--{% endif %}</div>
+        <div class="case-summary-meta">{% if latest_recovery %}Sức cơ {{ latest_recovery.muscle_strength }}/5 · Đau {{ latest_recovery.pain_level }}/10{% else %}Chưa có dữ liệu phục hồi{% endif %}</div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="case-summary-card h-100">
+        <div class="case-summary-label">Theo dõi điều trị</div>
+        <div class="case-summary-value text-dark">{{ recent_examinations|length }} khám</div>
+        <div class="case-summary-meta">{{ recent_prescriptions|length }} đơn thuốc · {{ recent_rehab_assessments|length }} đánh giá PHCN</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="clinical-stat-grid mb-4">
+    <div class="clinical-stat-card">
+      <div class="clinical-stat-top">
+        <div>
+          <div class="clinical-stat-label">Lịch khám gần đây</div>
+          <div class="clinical-stat-value">{{ recent_examinations|length }}</div>
+        </div>
+        <span class="clinical-stat-icon primary"><i class="fas fa-stethoscope"></i></span>
+      </div>
+      <div class="clinical-stat-note">Hiển thị 5 lần khám mới nhất trên hồ sơ này.</div>
+    </div>
+    <div class="clinical-stat-card">
+      <div class="clinical-stat-top">
+        <div>
+          <div class="clinical-stat-label">Đánh giá PHCN</div>
+          <div class="clinical-stat-value">{{ recent_rehab_assessments|length }}</div>
+        </div>
+        <span class="clinical-stat-icon teal"><i class="fas fa-chart-line"></i></span>
+      </div>
+      <div class="clinical-stat-note">Theo dõi khả năng tự lập, vận động và thăng bằng.</div>
+    </div>
+    <div class="clinical-stat-card">
+      <div class="clinical-stat-top">
+        <div>
+          <div class="clinical-stat-label">Đơn thuốc</div>
+          <div class="clinical-stat-value">{{ recent_prescriptions|length }}</div>
+        </div>
+        <span class="clinical-stat-icon primary"><i class="fas fa-prescription-bottle-medical"></i></span>
+      </div>
+      <div class="clinical-stat-note">Chỉ định thuốc, liều dùng và bản in được gom riêng để dễ theo dõi.</div>
+    </div>
+    <div class="clinical-stat-card">
+      <div class="clinical-stat-top">
+        <div>
+          <div class="clinical-stat-label">Bản ghi ECG</div>
+          <div class="clinical-stat-value">{{ ecg_records|length }}</div>
+        </div>
+        <span class="clinical-stat-icon red"><i class="fas fa-heart-pulse"></i></span>
+      </div>
+      <div class="clinical-stat-note">Nhịp tim và dẫn truyền được gom tại một nơi.</div>
+    </div>
+    <div class="clinical-stat-card">
+      <div class="clinical-stat-top">
+        <div>
+          <div class="clinical-stat-label">Phục hồi chi dưới</div>
+          <div class="clinical-stat-value">{{ recovery_records|length }}</div>
+        </div>
+        <span class="clinical-stat-icon green"><i class="fas fa-person-walking"></i></span>
+      </div>
+      <div class="clinical-stat-note">Theo dõi đau, sức cơ và khả năng đi lại.</div>
+    </div>
+  </div>
+
+  {% if patient.allergies or patient.diagnosis %}
+  <div class="clinical-alert mb-4">
+    <div class="clinical-alert-icon"><i class="fas fa-triangle-exclamation"></i></div>
+    <div>
+      <div class="clinical-alert-title">Lưu ý lâm sàng</div>
+      <div class="clinical-alert-body">
+        {% if patient.diagnosis %}<strong>Chẩn đoán:</strong> {{ patient.diagnosis }}{% endif %}
+        {% if patient.diagnosis and patient.allergies %}<span class="mx-2">•</span>{% endif %}
+        {% if patient.allergies %}<strong>Dị ứng:</strong> {{ patient.allergies }}{% endif %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <ul class="nav isr-tabs mb-4" id="patientTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+      <button class="isr-tab active" data-bs-toggle="tab" data-bs-target="#tab-info" type="button">
+        <i class="fas fa-id-card me-2"></i>Thông tin
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="isr-tab" data-bs-toggle="tab" data-bs-target="#tab-exam" type="button">
+        <i class="fas fa-stethoscope me-2"></i>Lịch khám
+        {% if recent_examinations %}<span class="tab-count">{{ recent_examinations|length }}</span>{% endif %}
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="isr-tab" data-bs-toggle="tab" data-bs-target="#tab-rehab" type="button">
+        <i class="fas fa-chart-line me-2"></i>Đánh giá PHCN
+        {% if recent_rehab_assessments %}<span class="tab-count">{{ recent_rehab_assessments|length }}</span>{% endif %}
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="isr-tab" data-bs-toggle="tab" data-bs-target="#tab-prescription" type="button">
+        <i class="fas fa-prescription-bottle-medical me-2"></i>Cấp thuốc
+        {% if recent_prescriptions %}<span class="tab-count">{{ recent_prescriptions|length }}</span>{% endif %}
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="isr-tab" data-bs-toggle="tab" data-bs-target="#tab-ecg" type="button">
+        <i class="fas fa-wave-square me-2"></i>ECG & Phục hồi
+      </button>
+    </li>
+  </ul>
+
+  <div class="tab-content">
+    <div class="tab-pane fade show active" id="tab-info">
+      <div class="row g-4">
+        <div class="col-xl-6">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+              <span class="section-kicker"><i class="fas fa-user"></i>Hành chính</span>
+              <span class="small text-muted">Mã BN: {{ patient.user.username }}</span>
+            </div>
+            <div class="card-body">
+              <dl class="info-grid">
+                <div class="info-item"><dt>Họ và tên</dt><dd>{{ patient.user.get_full_name }}</dd></div>
+                <div class="info-item"><dt>Giới tính</dt><dd>{{ patient.get_gender_display }}</dd></div>
+                <div class="info-item"><dt>Ngày sinh</dt><dd>{{ patient.date_of_birth|date:"d/m/Y"|default:"–" }}</dd></div>
+                <div class="info-item"><dt>Nhóm máu</dt><dd>{{ patient.blood_type|default:"–" }}</dd></div>
+                <div class="info-item"><dt>Số điện thoại</dt><dd>{{ patient.user.phone_number|default:"–" }}</dd></div>
+                <div class="info-item"><dt>Email</dt><dd>{{ patient.user.email|default:"–" }}</dd></div>
+                <div class="info-item"><dt>Ngày nhập viện</dt><dd>{{ patient.admission_date|date:"d/m/Y"|default:"–" }}</dd></div>
+                <div class="info-item"><dt>Trạng thái điều trị</dt><dd>{{ patient.get_treatment_status_display }}</dd></div>
+                <div class="info-item"><dt>Trạng thái phẫu thuật</dt><dd>{{ patient.get_surgery_status_display }}</dd></div>
+                <div class="info-item"><dt>Ngày phẫu thuật</dt><dd>{{ patient.surgery_date|date:"d/m/Y"|default:"–" }}</dd></div>
+                <div class="info-item"><dt>Tình trạng hậu phẫu</dt><dd>{{ patient.get_postoperative_status_display|default:"–" }}</dd></div>
+                <div class="info-item"><dt>Ngày xuất viện</dt><dd>{{ patient.discharge_date|date:"d/m/Y"|default:"–" }}</dd></div>
+                <div class="info-item"><dt>Tình trạng xuất viện</dt><dd>{{ patient.get_discharge_condition_display|default:"–" }}</dd></div>
+                <div class="info-item"><dt>Tên đăng nhập</dt><dd class="text-muted">{{ patient.user.username }}</dd></div>
+              </dl>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-xl-6">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+              <span class="section-kicker"><i class="fas fa-notes-medical"></i>Tiểu sử bệnh</span>
+              {% if user.is_nurse_user %}
+              <a href="{% url 'doctors:edit_patient_bio' patient.id %}" class="btn btn-outline-primary btn-sm">
+                <i class="fas fa-edit me-1"></i>Cập nhật
+              </a>
+              {% endif %}
+            </div>
+            <div class="card-body">
+              {% if patient.chief_complaint or patient.present_illness or patient.past_medical_history or patient.surgical_history or patient.surgery_name or patient.allergies or patient.current_medications %}
+              <dl class="bio-list">
+                {% if patient.chief_complaint %}
+                <div class="bio-item"><dt><i class="fas fa-comment-medical text-primary me-1"></i>Lý do vào viện</dt><dd>{{ patient.chief_complaint }}</dd></div>
+                {% endif %}
+                {% if patient.present_illness %}
+                <div class="bio-item"><dt><i class="fas fa-wave-square text-info me-1"></i>Bệnh sử hiện tại</dt><dd>{{ patient.present_illness|truncatechars:220 }}</dd></div>
+                {% endif %}
+                {% if patient.past_medical_history %}
+                <div class="bio-item"><dt><i class="fas fa-history text-secondary me-1"></i>Tiền sử bệnh</dt><dd>{{ patient.past_medical_history|truncatechars:180 }}</dd></div>
+                {% endif %}
+                {% if patient.surgery_name or patient.surgical_history or patient.surgery_status != 'none' %}
+                <div class="bio-item"><dt><i class="fas fa-user-doctor text-dark me-1"></i>Phẫu thuật</dt><dd>{% if patient.surgery_status != 'none' %}<strong>{{ patient.get_surgery_status_display }}</strong>{% endif %}{% if patient.surgery_name %}{% if patient.surgery_status != 'none' %} · {% endif %}{{ patient.surgery_name }}{% endif %}{% if patient.surgery_date %} · {{ patient.surgery_date|date:"d/m/Y" }}{% endif %}{% if patient.postoperative_status %} · {{ patient.get_postoperative_status_display }}{% endif %}{% if patient.surgical_history %}<div class="mt-2">{{ patient.surgical_history|truncatechars:180 }}</div>{% endif %}</dd></div>
+                {% endif %}
+                {% if patient.current_medications %}
+                <div class="bio-item"><dt><i class="fas fa-pills text-success me-1"></i>Thuốc đang dùng</dt><dd>{{ patient.current_medications|truncatechars:180 }}</dd></div>
+                {% endif %}
+                {% if patient.allergies %}
+                <div class="bio-item"><dt><i class="fas fa-allergies text-danger me-1"></i>Dị ứng</dt><dd class="text-danger fw-semibold">{{ patient.allergies }}</dd></div>
+                {% endif %}
+              </dl>
+              {% else %}
+              <div class="text-center py-5 text-muted">
+                <i class="fas fa-notes-medical fa-2x mb-3 opacity-25 d-block"></i>
+                <p class="mb-3">Chưa có tiểu sử bệnh được ghi nhận.</p>
+                {% if user.is_nurse_user %}
+                <a href="{% url 'doctors:edit_patient_bio' patient.id %}" class="btn btn-outline-primary btn-sm">Bổ sung hồ sơ</a>
+                {% endif %}
+              </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        {% if patient.notes %}
+        <div class="col-12">
+          <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white">
+              <span class="section-kicker"><i class="fas fa-pen"></i>Ghi chú điều trị</span>
+            </div>
+            <div class="card-body">
+              <div class="text-muted">{{ patient.notes }}</div>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="tab-pane fade" id="tab-exam">
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+        <div>
+          <span class="section-kicker"><i class="fas fa-stethoscope"></i>Khám bệnh</span>
+          <p class="text-muted mb-0 mt-2">Tóm tắt 5 lần khám mới nhất để so sánh triệu chứng, dấu hiệu sinh tồn và chẩn đoán.</p>
+        </div>
+        <div class="d-flex gap-2">
+          <a href="{% url 'doctors:examination_list' patient.id %}" class="btn btn-outline-secondary btn-sm">Xem tất cả</a>
+          {% if user.is_nurse_user %}
+          <a href="{% url 'doctors:add_examination' patient.id %}" class="btn btn-info text-white btn-sm"><i class="fas fa-plus me-1"></i>Thêm lịch khám</a>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="timeline-list">
+        {% for ex in recent_examinations %}
+        <div class="timeline-item">
+          <div class="timeline-dot bg-info"></div>
+          <div class="timeline-card">
+            <div class="timeline-card-header">
+              <div>
+                <div class="fw-semibold text-dark">{{ ex.exam_date|date:"d/m/Y" }}</div>
+                <div class="small text-muted">{{ ex.exam_date|date:"H:i" }}</div>
+              </div>
+              <div class="d-flex gap-2 align-items-center flex-wrap justify-content-end">
+                {% if ex.blood_pressure_systolic %}<span class="badge bg-light text-secondary border">{{ ex.blood_pressure_systolic }}/{{ ex.blood_pressure_diastolic }} mmHg</span>{% endif %}
+                {% if ex.heart_rate %}<span class="badge bg-light text-secondary border"><i class="fas fa-heartbeat text-danger me-1"></i>{{ ex.heart_rate }} bpm</span>{% endif %}
+                <a href="{% url 'doctors:examination_detail' patient.id ex.id %}" class="btn btn-outline-secondary btn-sm">Chi tiết</a>
+              </div>
+            </div>
+            {% if ex.chief_complaint %}
+            <div class="timeline-card-body">
+              <div class="small text-muted">{{ ex.chief_complaint|truncatechars:160 }}</div>
+            </div>
+            {% endif %}
+            {% if ex.diagnosis %}
+            <div class="mt-3">
+              <span class="badge bg-danger bg-opacity-10 text-danger border border-danger-subtle px-3 py-2">
+                <i class="fas fa-diagnoses me-1"></i>{{ ex.diagnosis|truncatechars:90 }}
+              </span>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+        {% empty %}
+        <div class="card border-0 shadow-sm">
+          <div class="card-body text-center py-5 text-muted">
+            <i class="fas fa-stethoscope fa-3x mb-3 opacity-25 d-block"></i>
+            <p class="mb-3">Chưa có lịch sử khám.</p>
+            {% if user.is_nurse_user %}
+            <a href="{% url 'doctors:add_examination' patient.id %}" class="btn btn-info text-white"><i class="fas fa-plus me-1"></i>Thêm lịch khám</a>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="tab-pane fade" id="tab-rehab">
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+        <div>
+          <span class="section-kicker"><i class="fas fa-chart-line"></i>Đánh giá chức năng</span>
+          <p class="text-muted mb-0 mt-2">Các chỉ số chính được trình bày theo thẻ điểm để bác sĩ quét nhanh xu hướng hồi phục.</p>
+        </div>
+        <div class="d-flex gap-2">
+          <a href="{% url 'doctors:rehab_assessment_list' patient.id %}" class="btn btn-outline-secondary btn-sm">Xem tất cả</a>
+          {% if user.is_nurse_user %}
+          <a href="{% url 'doctors:add_rehab_assessment' patient.id %}" class="btn btn-success btn-sm"><i class="fas fa-plus me-1"></i>Thêm đánh giá</a>
+          {% endif %}
+        </div>
+      </div>
+
+      {% if recent_rehab_assessments %}
+      <div class="row g-3">
+        {% for ra in recent_rehab_assessments %}
+        <div class="col-xl-6">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                  <div class="fw-semibold text-dark">{{ ra.assessed_at|date:"d/m/Y" }}</div>
+                  <small class="text-muted">{{ ra.assessed_at|date:"H:i" }}</small>
+                </div>
+                <a href="{% url 'doctors:rehab_assessment_detail' patient.id ra.id %}" class="btn btn-outline-secondary btn-sm">Chi tiết</a>
+              </div>
+              <div class="rehab-score-grid">
+                {% if ra.barthel_index is not None %}
+                <div class="rehab-score-chip">
+                  {% with ra.barthel_level as bl %}
+                  <div class="rehab-score-name">Barthel</div>
+                  <div class="rehab-score-val text-{{ bl.0 }}">{{ ra.barthel_index }}</div>
+                  <div class="rehab-score-max">/100</div>
+                  {% endwith %}
+                </div>
+                {% endif %}
+                {% if ra.berg_balance_scale is not None %}
+                <div class="rehab-score-chip">
+                  {% with ra.berg_level as bb %}
+                  <div class="rehab-score-name">Berg</div>
+                  <div class="rehab-score-val text-{{ bb.0 }}">{{ ra.berg_balance_scale }}</div>
+                  <div class="rehab-score-max">/56</div>
+                  {% endwith %}
+                </div>
+                {% endif %}
+                {% if ra.nihss_score is not None %}
+                <div class="rehab-score-chip">
+                  {% with ra.nihss_level as nl %}
+                  <div class="rehab-score-name">NIHSS</div>
+                  <div class="rehab-score-val text-{{ nl.0 }}">{{ ra.nihss_score }}</div>
+                  <div class="rehab-score-max">/42</div>
+                  {% endwith %}
+                </div>
+                {% endif %}
+                {% if ra.pain_rating is not None %}
+                <div class="rehab-score-chip">
+                  <div class="rehab-score-name">NRS đau</div>
+                  <div class="rehab-score-val {% if ra.pain_rating >= 7 %}text-danger{% elif ra.pain_rating >= 4 %}text-warning{% else %}text-success{% endif %}">{{ ra.pain_rating }}</div>
+                  <div class="rehab-score-max">/10</div>
+                </div>
+                {% endif %}
+                {% if ra.fim_score %}
+                <div class="rehab-score-chip">
+                  <div class="rehab-score-name">FIM</div>
+                  <div class="rehab-score-val">{{ ra.fim_score }}</div>
+                  <div class="rehab-score-max">/126</div>
+                </div>
+                {% endif %}
+                {% if ra.six_minute_walk %}
+                <div class="rehab-score-chip">
+                  <div class="rehab-score-name">6MWT</div>
+                  <div class="rehab-score-val text-primary">{{ ra.six_minute_walk }}</div>
+                  <div class="rehab-score-max">m</div>
+                </div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="card border-0 shadow-sm">
+        <div class="card-body text-center py-5 text-muted">
+          <i class="fas fa-chart-line fa-3x mb-3 opacity-25 d-block"></i>
+          <p class="mb-3">Chưa có đánh giá phục hồi chức năng.</p>
+          {% if user.is_nurse_user %}
+          <a href="{% url 'doctors:add_rehab_assessment' patient.id %}" class="btn btn-success"><i class="fas fa-plus me-1"></i>Thêm đánh giá</a>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="tab-pane fade" id="tab-prescription">
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+        <div>
+          <span class="section-kicker"><i class="fas fa-prescription-bottle-medical"></i>Chỉ định thuốc</span>
+          <p class="text-muted mb-0 mt-2">Lưu riêng toa thuốc để theo dõi chỉ định, sinh hiệu tại thời điểm kê và mở nhanh trang in đơn.</p>
+        </div>
+        <div class="d-flex gap-2">
+          <a href="{% url 'doctors:prescription_list' patient.id %}" class="btn btn-outline-secondary btn-sm">Xem tất cả</a>
+          {% if user.is_doctor %}
+          <a href="{% url 'doctors:add_prescription' patient.id %}" class="btn btn-primary btn-sm"><i class="fas fa-plus me-1"></i>Cấp thuốc</a>
+          {% endif %}
+        </div>
+      </div>
+
+      {% if recent_prescriptions %}
+      <div class="row g-3">
+        {% for rx in recent_prescriptions %}
+        <div class="col-xl-6">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-body d-flex flex-column gap-3">
+              <div class="d-flex justify-content-between align-items-start gap-3">
+                <div>
+                  <div class="fw-semibold text-dark">{{ rx.issued_at|date:"d/m/Y H:i" }}</div>
+                  <div class="small text-muted">{{ rx.prescribed_by.get_full_name|default:"Bác sĩ phụ trách" }}</div>
+                </div>
+                <a href="{% url 'doctors:prescription_detail' patient.id rx.id %}" class="btn btn-outline-secondary btn-sm">Xem & in</a>
+              </div>
+              {% if rx.diagnosis %}
+              <div class="small text-dark fw-semibold">{{ rx.diagnosis|truncatechars:120 }}</div>
+              {% endif %}
+              <div class="d-flex flex-wrap gap-2">
+                {% if rx.blood_pressure_systolic %}<span class="badge bg-light text-secondary border">HA {{ rx.blood_pressure_systolic }}/{{ rx.blood_pressure_diastolic }} mmHg</span>{% endif %}
+                {% if rx.heart_rate %}<span class="badge bg-light text-secondary border">Mạch {{ rx.heart_rate }} bpm</span>{% endif %}
+                {% if rx.temperature %}<span class="badge bg-light text-secondary border">{{ rx.temperature }} °C</span>{% endif %}
+                {% if rx.spo2 %}<span class="badge bg-light text-secondary border">SpO₂ {{ rx.spo2 }}%</span>{% endif %}
+                {% if rx.blood_glucose %}<span class="badge bg-light text-secondary border">ĐH {{ rx.blood_glucose }} mmol/L</span>{% endif %}
+                {% if rx.pain_score is not None %}<span class="badge bg-light text-secondary border">Đau {{ rx.pain_score }}/10</span>{% endif %}
+              </div>
+              <div class="soft-note small">{{ rx.medications|truncatechars:220|linebreaksbr }}</div>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="card border-0 shadow-sm">
+        <div class="card-body text-center py-5 text-muted">
+          <i class="fas fa-prescription-bottle-medical fa-3x mb-3 opacity-25 d-block"></i>
+          <p class="mb-3">Chưa có chỉ định thuốc nào cho bệnh nhân này.</p>
+          <a href="{% url 'doctors:add_prescription' patient.id %}" class="btn btn-primary"><i class="fas fa-plus me-1"></i>Tạo đơn thuốc đầu tiên</a>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="tab-pane fade" id="tab-ecg">
+      <div class="row g-4">
+        <div class="col-xl-6">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+              <span class="section-kicker"><i class="fas fa-wave-square"></i>ECG</span>
+              {% if user.is_nurse_user %}
+              <a href="{% url 'doctors:add_ecg' patient.id %}" class="btn btn-outline-danger btn-sm"><i class="fas fa-plus me-1"></i>Thêm</a>
+              {% endif %}
+            </div>
+            <div class="card-body p-0">
+              <table class="table table-sm table-hover mb-0 align-middle">
+                <thead class="table-light">
+                  <tr><th class="ps-3">Ngày</th><th>Nhịp tim</th><th>PR</th><th>QRS</th><th>Kết quả</th></tr>
+                </thead>
+                <tbody>
+                  {% for ecg in ecg_records %}
+                  <tr>
+                    <td class="ps-3 small">{{ ecg.recorded_at|date:"d/m/Y" }}</td>
+                    <td><span class="badge bg-{{ ecg.hr_status.0 }}">{{ ecg.heart_rate }}</span></td>
+                    <td class="small text-muted">{{ ecg.pr_interval }}</td>
+                    <td class="small text-muted">{{ ecg.qrs_duration }}</td>
+                    <td>{% if ecg.is_abnormal %}<span class="small text-danger fw-semibold">Bất thường</span>{% else %}<span class="small text-success fw-semibold">Bình thường</span>{% endif %}</td>
+                  </tr>
+                  {% empty %}
+                  <tr><td colspan="5" class="text-center text-muted py-4">Chưa có dữ liệu ECG.</td></tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-xl-6">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+              <span class="section-kicker"><i class="fas fa-person-walking"></i>Phục hồi chi dưới</span>
+              {% if user.is_nurse_user %}
+              <a href="{% url 'doctors:add_recovery' patient.id %}" class="btn btn-outline-success btn-sm"><i class="fas fa-plus me-1"></i>Thêm</a>
+              {% endif %}
+            </div>
+            <div class="card-body p-0">
+              <table class="table table-sm table-hover mb-0 align-middle">
+                <thead class="table-light">
+                  <tr><th class="ps-3">Ngày</th><th>Tiến triển</th><th>Sức cơ</th><th>ROM</th><th>Sinh hiệu</th><th>Cảm biến</th><th>Đau</th><th>Đi lại</th></tr>
+                </thead>
+                <tbody>
+                  {% for rec in recovery_records %}
+                  <tr>
+                    <td class="ps-3 small">{{ rec.recorded_at|date:"d/m/Y" }}</td>
+                    <td>
+                      <div class="d-flex align-items-center gap-2">
+                        <div class="progress" style="height:6px;width:44px;"><div class="progress-bar bg-{{ rec.recovery_color }}" style="width:{{ rec.recovery_percentage }}%"></div></div>
+                        <span class="small text-{{ rec.recovery_color }} fw-semibold">{{ rec.recovery_percentage }}%</span>
+                      </div>
+                    </td>
+                    <td><span class="badge bg-{{ rec.muscle_color }}">{{ rec.muscle_strength }}/5</span></td>
+                    <td class="small text-muted">{{ rec.range_of_motion }}°</td>
+                    <td class="small">{% if rec.heart_rate %}HR {{ rec.heart_rate }}{% endif %}{% if rec.spo2 %}<br>SpO₂ {{ rec.spo2 }}%{% endif %}{% if rec.fatigue_index is not None %}<br>Mệt {{ rec.fatigue_index }}/10{% endif %}{% if not rec.heart_rate and not rec.spo2 and rec.fatigue_index is None %}–{% endif %}</td>
+                    <td class="small">{% if rec.imu_velocity %}v {{ rec.imu_velocity }}{% endif %}{% if rec.imu_acceleration %}<br>a {{ rec.imu_acceleration }}{% endif %}{% if rec.gait_speed %}<br>{{ rec.gait_speed }} m/s{% endif %}{% if rec.plantar_force %}<br>{{ rec.plantar_force }} N{% endif %}{% if not rec.imu_velocity and not rec.imu_acceleration and not rec.gait_speed and not rec.plantar_force %}–{% endif %}</td>
+                    <td><span class="badge bg-{{ rec.pain_color }}">{{ rec.pain_level }}/10</span></td>
+                    <td class="small text-muted">{{ rec.get_walking_ability_display|truncatechars:18 }}</td>
+                  </tr>
+                  {% empty %}
+                  <tr><td colspan="8" class="text-center text-muted py-4">Chưa có dữ liệu phục hồi.</td></tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

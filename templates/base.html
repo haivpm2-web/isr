@@ -1,0 +1,251 @@
+{% load ui_i18n %}
+<!DOCTYPE html>
+<html lang="{{ site_language }}">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}ISR Hospital{% endblock %}</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
+  <link href="/static/css/style.css" rel="stylesheet" />
+  {% block extra_css %}{% endblock %}
+</head>
+<body class="app-layout">
+
+  <!-- ════════════════════════════════════════════════════════════
+       SIDEBAR  (mobile drawer + desktop fixed)
+  ════════════════════════════════════════════════════════════ -->
+  {% if user.is_authenticated %}
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <i class="fas fa-heartbeat"></i>
+      <span>ISR Hospital</span>
+    </div>
+
+    <nav class="sidebar-nav mt-2">
+      {% if user.is_admin_user %}
+        <p class="sidebar-section">{% t "QUẢN TRỊ" %}</p>
+        <a href="{% url 'accounts:admin_dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}">
+          <i class="fas fa-tachometer-alt"></i><span>{% t "Tổng quan" %}</span>
+        </a>
+        <a href="{% url 'accounts:create_account' %}?role=patient" class="sidebar-link">
+          <i class="fas fa-user-plus"></i><span>{% t "Thêm bệnh nhân" %}</span>
+        </a>
+        <a href="{% url 'accounts:create_account' %}?role=doctor" class="sidebar-link">
+          <i class="fas fa-user-md"></i><span>{% t "Thêm bác sĩ" %}</span>
+        </a>
+        <a href="{% url 'accounts:create_account' %}?role=nurse" class="sidebar-link">
+          <i class="fas fa-user-nurse"></i><span>{% t "Thêm điều dưỡng" %}</span>
+        </a>
+        <a href="{% url 'accounts:create_account' %}?role=admin" class="sidebar-link">
+          <i class="fas fa-shield-alt"></i><span>{% t "Thêm admin" %}</span>
+        </a>
+      {% elif user.is_doctor %}
+        <p class="sidebar-section">{% t "BÁC SĨ" %}</p>
+        <a href="{% url 'doctors:dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+          <i class="fas fa-tachometer-alt"></i><span>{% t "Tổng quan" %}</span>
+        </a>
+        <a href="{% url 'doctors:patient_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'patient_list' %}active{% endif %}">
+          <i class="fas fa-users"></i><span>{% t "Danh sách bệnh nhân" %}</span>
+        </a>
+      {% elif user.is_nurse_user %}
+        <p class="sidebar-section">{% t "ĐIỀU DƯỠNG" %}</p>
+        <a href="{% url 'doctors:dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+          <i class="fas fa-tachometer-alt"></i><span>{% t "Tổng quan" %}</span>
+        </a>
+        <a href="{% url 'doctors:patient_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'patient_list' %}active{% endif %}">
+          <i class="fas fa-user-nurse"></i><span>{% t "Nhập dữ liệu bệnh nhân" %}</span>
+        </a>
+      {% elif user.is_patient_user %}
+        <p class="sidebar-section">{% t "BỆNH NHÂN" %}</p>
+        <a href="{% url 'patients:dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+          <i class="fas fa-home"></i><span>{% t "Tổng quan" %}</span>
+        </a>
+        <a href="{% url 'patients:ecg_list' %}" class="sidebar-link {% if 'ecg' in request.resolver_match.url_name %}active{% endif %}">
+          <i class="fas fa-wave-square"></i><span>{% t "Kết quả ECG" %}</span>
+        </a>
+        <a href="{% url 'patients:recovery' %}" class="sidebar-link {% if request.resolver_match.url_name == 'recovery' %}active{% endif %}">
+          <i class="fas fa-walking"></i><span>{% t "Phục hồi chân" %}</span>
+        </a>
+      {% endif %}
+
+      <div class="px-2 mt-3 mb-2">
+        <form method="post" action="{% url 'set_language' %}" class="lang-switcher w-100 justify-content-center mb-0">
+          {% csrf_token %}
+          <input type="hidden" name="next" value="{{ request.get_full_path }}" />
+          {% for code, label in language_choices %}
+          <button type="submit" name="language" value="{{ code }}" class="lang-btn {% if site_language == code %}active{% endif %}">{{ label }}</button>
+          {% endfor %}
+        </form>
+      </div>
+
+      <hr class="sidebar-divider" />
+      <div class="sidebar-user">
+        <span class="header-avatar header-avatar-sm">
+          {% if user.is_admin_user %}<i class="fas fa-shield-alt"></i>
+          {% elif user.is_doctor %}<i class="fas fa-stethoscope"></i>
+          {% elif user.is_nurse_user %}<i class="fas fa-user-nurse"></i>
+          {% else %}<i class="fas fa-user"></i>{% endif %}
+        </span>
+        <div class="min-w-0">
+          <div class="fw-semibold text-truncate small">{{ user.get_full_name|default:user.username }}</div>
+          <small class="opacity-60">{% t user.get_role_display %}</small>
+        </div>
+      </div>
+      <form method="post" action="{% url 'accounts:logout' %}" class="mt-1">
+        {% csrf_token %}
+        <button type="submit" class="sidebar-link w-100 text-start border-0 bg-transparent">
+          <i class="fas fa-sign-out-alt"></i><span>{% t "Đăng xuất" %}</span>
+        </button>
+      </form>
+    </nav>
+  </aside>
+  {% endif %}
+
+  <!-- ════════════════════════════════════════════════════════════
+       MAIN WRAPPER
+  ════════════════════════════════════════════════════════════ -->
+  <div class="main-wrapper {% if not user.is_authenticated %}no-sidebar{% endif %}">
+
+    <!-- Breadcrumb / page-title bar -->
+    {% block page_title_bar %}
+      <div class="page-title-bar">
+        <span class="page-title-bar-text">{% block page_title %}{% endblock %}</span>
+      </div>
+    {% endblock %}
+
+    <!-- Flash messages -->
+    <div class="px-4 pt-3">
+      {% for msg in messages %}
+      <div class="alert alert-{{ msg.tags|default:'info' }} alert-dismissible fade show" role="alert">
+        {% if msg.tags == 'success' %}<i class="fas fa-check-circle me-2"></i>
+        {% elif msg.tags == 'error' or msg.tags == 'danger' %}<i class="fas fa-exclamation-circle me-2"></i>
+        {% elif msg.tags == 'warning' %}<i class="fas fa-exclamation-triangle me-2"></i>
+        {% else %}<i class="fas fa-info-circle me-2"></i>{% endif %}
+        {{ msg }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Page content -->
+    <main class="page-content">
+      {% block content %}{% endblock %}
+    </main>
+
+    <!-- ════════════════════════════════════════════════════════
+         FOOTER
+    ═════════════════════════════════════════════════════════ -->
+    <footer class="site-footer">
+      <div class="site-footer-inner">
+
+        <!-- Col 1: Brand -->
+        <div class="footer-brand">
+          <div class="d-flex align-items-center gap-2 mb-2">
+            <span class="footer-brand-icon"><i class="fas fa-heartbeat"></i></span>
+            <span class="footer-brand-name">ISR Hospital</span>
+          </div>
+          <p class="footer-tagline">Hệ thống quản lý bệnh viện<br>phục hồi chức năng tiên tiến</p>
+          <div class="footer-social">
+            <a href="#" class="footer-social-btn" title="Facebook"><i class="fab fa-facebook-f"></i></a>
+            <a href="#" class="footer-social-btn" title="YouTube"><i class="fab fa-youtube"></i></a>
+            <a href="#" class="footer-social-btn" title="Email"><i class="fas fa-envelope"></i></a>
+          </div>
+        </div>
+
+        <!-- Col 2: Quick links -->
+        <div class="footer-links">
+          <h6 class="footer-heading">Tính năng</h6>
+          <ul class="footer-link-list">
+            <li><a href="#"><i class="fas fa-wave-square me-2"></i>Theo dõi ECG</a></li>
+            <li><a href="#"><i class="fas fa-walking me-2"></i>Phục hồi chân</a></li>
+            <li><a href="#"><i class="fas fa-users me-2"></i>Quản lý bệnh nhân</a></li>
+            <li><a href="#"><i class="fas fa-chart-line me-2"></i>Biểu đồ tiến trình</a></li>
+          </ul>
+        </div>
+
+        <!-- Col 3: Contact -->
+        <div class="footer-links">
+          <h6 class="footer-heading">Liên hệ</h6>
+          <ul class="footer-link-list">
+            <li><i class="fas fa-map-marker-alt me-2"></i>123 Đường Sức Khỏe, Q.1, TP.HCM</li>
+            <li><i class="fas fa-phone me-2"></i>(028) 1234 5678</li>
+            <li><i class="fas fa-envelope me-2"></i>info@isrhospital.vn</li>
+            <li><i class="fas fa-clock me-2"></i>Thứ 2 – Thứ 7: 7:00 – 17:00</li>
+          </ul>
+        </div>
+
+        <!-- Col 4: System info -->
+        <div class="footer-links">
+          <h6 class="footer-heading">Hệ thống</h6>
+          <div class="footer-stats">
+            <div class="footer-stat-item">
+              <i class="fas fa-shield-check text-info"></i>
+              <span>Bảo mật SSL</span>
+            </div>
+            <div class="footer-stat-item">
+              <i class="fas fa-server text-info"></i>
+              <span>Uptime 99.9%</span>
+            </div>
+            <div class="footer-stat-item">
+              <i class="fas fa-lock text-info"></i>
+              <span>Dữ liệu được mã hóa</span>
+            </div>
+            <div class="footer-stat-item">
+              <i class="fas fa-mobile-alt text-info"></i>
+              <span>Hỗ trợ đa thiết bị</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Bottom bar -->
+      <div class="footer-bottom">
+        <span>&copy; 2026 ISR Hospital. Bảo lưu mọi quyền.</span>
+        <span class="footer-bottom-sep d-none d-md-inline">|</span>
+        <span>Phiên bản 1.0.0 &nbsp;·&nbsp; Django 5.0</span>
+        <span class="footer-bottom-sep d-none d-md-inline">|</span>
+        <span class="d-none d-md-inline">Powered by <strong>ISR Tech</strong></span>
+      </div>
+    </footer>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+
+  <script>
+    // Current date
+    const _d = new Date();
+    const _dateEl = document.getElementById('currentDate');
+    if (_dateEl) {
+      _dateEl.textContent = _d.toLocaleDateString('vi-VN', {
+        weekday: 'short', year: 'numeric', month: 'short', day: 'numeric'
+      });
+    }
+
+    // Sidebar toggle (mobile)
+    const _toggleBtn  = document.getElementById('sidebarToggle');
+    const _sidebar    = document.getElementById('sidebar');
+    const _overlay    = document.getElementById('sidebarOverlay');
+    const _mainWrap   = document.querySelector('.main-wrapper');
+
+    function openSidebar()  { _sidebar?.classList.add('open');    _overlay?.classList.add('visible'); }
+    function closeSidebar() { _sidebar?.classList.remove('open'); _overlay?.classList.remove('visible'); }
+
+    _toggleBtn?.addEventListener('click', () => {
+      if (_sidebar?.classList.contains('open')) closeSidebar();
+      else openSidebar();
+    });
+    _overlay?.addEventListener('click', closeSidebar);
+
+    // Close sidebar on nav-link click (mobile)
+    document.querySelectorAll('.sidebar .sidebar-link').forEach(l =>
+      l.addEventListener('click', closeSidebar)
+    );
+  </script>
+
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

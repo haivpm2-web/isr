@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}Đơn thuốc – {{ patient.user.get_full_name }}{% endblock %}
+{% block page_title %}<i class="fas fa-prescription-bottle-medical me-2 text-primary"></i>Lịch sử cấp thuốc{% endblock %}
+
+{% block content %}
+<div class="container-fluid pb-4">
+  <div class="page-hero mb-4">
+    <div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">
+      <div>
+        <span class="section-kicker"><i class="fas fa-file-prescription"></i>Đơn thuốc</span>
+        <h1 class="page-hero-title">Theo dõi chỉ định thuốc của {{ patient.user.get_full_name }}</h1>
+        <p class="page-hero-text">Bảng này gom các toa thuốc đã cấp, sinh hiệu đi kèm và đường dẫn mở nhanh trang in đơn.</p>
+      </div>
+      <div class="d-flex align-items-center gap-3 flex-wrap">
+        <span class="hero-patient"><span class="avatar-circle-sm">{{ patient.user.get_full_name|first|upper }}</span>{{ patient.user.get_full_name }}</span>
+        <a href="{% url 'doctors:patient_detail' patient.id %}" class="btn btn-outline-secondary btn-sm"><i class="fas fa-arrow-left me-1"></i>Hồ sơ bệnh nhân</a>
+        {% if user.is_doctor %}
+        <a href="{% url 'doctors:add_prescription' patient.id %}" class="btn btn-primary btn-sm"><i class="fas fa-plus me-1"></i>Cấp thuốc</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="metric-strip mb-4">
+    <div class="metric-card"><div class="metric-label">Tổng số đơn</div><div class="metric-value">{{ records|length }}</div><div class="metric-subtext">Toàn bộ đơn thuốc đã lưu trong hồ sơ.</div></div>
+    <div class="metric-card"><div class="metric-label">Đơn gần nhất</div><div class="metric-value">{% if records %}{{ records.0.issued_at|date:"d/m" }}{% else %}–{% endif %}</div><div class="metric-subtext">{% if records %}{{ records.0.issued_at|date:"Y H:i" }}{% else %}Chưa có dữ liệu{% endif %}</div></div>
+    <div class="metric-card"><div class="metric-label">Chẩn đoán hồ sơ</div><div class="metric-value" style="font-size:1rem;line-height:1.35;">{{ patient.diagnosis|default:"Chưa cập nhật"|truncatechars:40 }}</div><div class="metric-subtext">Gợi ý nhanh trước khi xem toa chi tiết.</div></div>
+  </div>
+
+  {% if records %}
+  <div class="data-table-card">
+    <div class="table-toolbar">
+      <div>
+        <h2 class="table-toolbar-title">{{ records|length }} đơn thuốc đã ghi nhận</h2>
+        <p class="table-toolbar-subtitle">Sắp xếp từ mới đến cũ để bác sĩ đối chiếu nhanh khi chỉnh đơn hoặc in lại.</p>
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th class="ps-4">#</th>
+            <th>Ngày cấp</th>
+            <th>Sinh hiệu</th>
+            <th>Chẩn đoán</th>
+            <th>Thuốc kê</th>
+            <th>Tái khám</th>
+            <th class="text-end pe-4"></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for rx in records %}
+          <tr>
+            <td class="ps-4"><span class="row-index">{{ forloop.counter }}</span></td>
+            <td>
+              <div class="fw-semibold text-dark">{{ rx.issued_at|date:"d/m/Y" }}</div>
+              <div class="small text-muted">{{ rx.issued_at|date:"H:i" }}</div>
+            </td>
+            <td class="small">
+              <div class="d-flex flex-wrap gap-1">
+                {% if rx.blood_pressure_systolic %}<span class="score-pill soft-warning">HA {{ rx.blood_pressure_systolic }}/{{ rx.blood_pressure_diastolic }}</span>{% endif %}
+                {% if rx.heart_rate %}<span class="score-pill soft-danger">M {{ rx.heart_rate }}</span>{% endif %}
+                {% if rx.spo2 %}<span class="score-pill soft-success">SpO₂ {{ rx.spo2 }}%</span>{% endif %}
+                {% if rx.blood_glucose %}<span class="score-pill soft-info">ĐH {{ rx.blood_glucose }}</span>{% endif %}
+              </div>
+            </td>
+            <td class="small">{{ rx.diagnosis|default:"–"|truncatechars:50 }}</td>
+            <td class="small">{{ rx.medications|truncatechars:60 }}</td>
+            <td class="small text-muted">{{ rx.follow_up_date|date:"d/m/Y"|default:"–" }}</td>
+            <td class="text-end pe-4"><a href="{% url 'doctors:prescription_detail' patient.id rx.id %}" class="btn btn-outline-secondary btn-sm"><i class="fas fa-eye me-1"></i>Xem</a></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% else %}
+  <div class="empty-state-card">
+    <i class="fas fa-prescription-bottle-medical fa-3x mb-3 opacity-25 d-block"></i>
+    <p class="mb-3">Chưa có đơn thuốc cho bệnh nhân này.</p>
+    {% if user.is_doctor %}
+    <a href="{% url 'doctors:add_prescription' patient.id %}" class="btn btn-primary"><i class="fas fa-plus me-1"></i>Tạo đơn thuốc đầu tiên</a>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

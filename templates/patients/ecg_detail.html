@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+{% block title %}ECG {{ record.recorded_at|date:"d/m/Y" }} – ISR Hospital{% endblock %}
+{% block page_title %}<i class="fas fa-wave-square me-2 text-danger"></i>Chi tiết ECG{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="mb-3">
+    <a href="{% url 'patients:ecg_list' %}" class="btn btn-outline-secondary btn-sm">
+      <i class="fas fa-arrow-left me-1"></i>Quay lại danh sách
+    </a>
+  </div>
+
+  <div class="row g-4">
+    <!-- Main info card -->
+    <div class="col-lg-4">
+      <div class="card shadow-sm h-100">
+        <div class="card-header bg-white fw-semibold">
+          <i class="fas fa-info-circle me-2 text-primary"></i>Thông tin chung
+        </div>
+        <div class="card-body">
+          <dl class="row mb-0 small">
+            <dt class="col-5 text-muted">Bệnh nhân</dt>
+            <dd class="col-7 fw-semibold">{{ record.patient.user.get_full_name }}</dd>
+
+            <dt class="col-5 text-muted">Thời gian</dt>
+            <dd class="col-7">{{ record.recorded_at|date:"d/m/Y H:i" }}</dd>
+
+            <dt class="col-5 text-muted">Thực hiện bởi</dt>
+            <dd class="col-7">{{ record.recorded_by.get_full_name|default:"–" }}</dd>
+
+            <dt class="col-5 text-muted">Loại nhịp</dt>
+            <dd class="col-7">{{ record.get_rhythm_display }}</dd>
+
+            <dt class="col-5 text-muted">Trạng thái</dt>
+            <dd class="col-7">
+              {% if record.is_abnormal %}
+              <span class="badge bg-danger">Bất thường</span>
+              {% else %}
+              <span class="badge bg-success">Bình thường</span>
+              {% endif %}
+            </dd>
+          </dl>
+          {% if record.notes %}
+          <hr />
+          <p class="small text-muted mb-1"><i class="fas fa-comment-medical me-1"></i>Nhận xét:</p>
+          <p class="small">{{ record.notes }}</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Parameters -->
+    <div class="col-lg-8">
+      <div class="card shadow-sm">
+        <div class="card-header bg-white fw-semibold">
+          <i class="fas fa-chart-bar me-2 text-danger"></i>Thông số đo ECG
+        </div>
+        <div class="card-body">
+          <!-- Interval parameters -->
+          <h6 class="text-muted small mb-3 text-uppercase fw-semibold">Khoảng thời gian</h6>
+          <div class="row g-3 mb-4">
+            {% with record.hr_status as sts %}
+            <div class="col-6 col-md-3">
+              <div class="ecg-param-box border-{{ sts.0 }}">
+                <div class="param-label">Nhịp tim</div>
+                <div class="param-value text-{{ sts.0 }}">{{ record.heart_rate }}</div>
+                <div class="param-unit">bpm</div>
+                <div class="param-ref text-muted">60–100</div>
+              </div>
+            </div>
+            {% endwith %}
+            {% with record.pr_status as sts %}
+            <div class="col-6 col-md-3">
+              <div class="ecg-param-box border-{{ sts.0 }}">
+                <div class="param-label">Khoảng PR</div>
+                <div class="param-value text-{{ sts.0 }}">{{ record.pr_interval }}</div>
+                <div class="param-unit">ms</div>
+                <div class="param-ref text-muted">120–200</div>
+              </div>
+            </div>
+            {% endwith %}
+            {% with record.qrs_status as sts %}
+            <div class="col-6 col-md-3">
+              <div class="ecg-param-box border-{{ sts.0 }}">
+                <div class="param-label">Thời gian QRS</div>
+                <div class="param-value text-{{ sts.0 }}">{{ record.qrs_duration }}</div>
+                <div class="param-unit">ms</div>
+                <div class="param-ref text-muted">&lt; 120</div>
+              </div>
+            </div>
+            {% endwith %}
+            {% with record.qt_status as sts %}
+            <div class="col-6 col-md-3">
+              <div class="ecg-param-box border-{{ sts.0 }}">
+                <div class="param-label">Khoảng QT</div>
+                <div class="param-value text-{{ sts.0 }}">{{ record.qt_interval }}</div>
+                <div class="param-unit">ms</div>
+                <div class="param-ref text-muted">350–440</div>
+              </div>
+            </div>
+            {% endwith %}
+            {% if record.qtc_interval %}
+            <div class="col-6 col-md-3">
+              <div class="ecg-param-box">
+                <div class="param-label">Khoảng QTc</div>
+                <div class="param-value">{{ record.qtc_interval }}</div>
+                <div class="param-unit">ms</div>
+              </div>
+            </div>
+            {% endif %}
+            {% if record.rr_interval %}
+            <div class="col-6 col-md-3">
+              <div class="ecg-param-box">
+                <div class="param-label">Khoảng RR</div>
+                <div class="param-value">{{ record.rr_interval }}</div>
+                <div class="param-unit">ms</div>
+              </div>
+            </div>
+            {% endif %}
+            {% if record.st_change %}
+            <div class="col-6 col-md-3">
+              <div class="ecg-param-box {% if record.st_change|floatformat:0 != '0' %}border-warning{% endif %}">
+                <div class="param-label">Thay đổi ST</div>
+                <div class="param-value {% if record.st_change %}text-warning{% endif %}">{{ record.st_change }}</div>
+                <div class="param-unit">mm</div>
+              </div>
+            </div>
+            {% endif %}
+          </div>
+
+          <!-- Wave amplitudes -->
+          {% if record.p_wave_amplitude or record.qrs_amplitude or record.t_wave_amplitude %}
+          <h6 class="text-muted small mb-3 text-uppercase fw-semibold">Biên độ sóng</h6>
+          <canvas id="amplitudeChart" height="120"></canvas>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+{% if record.p_wave_amplitude or record.qrs_amplitude or record.t_wave_amplitude %}
+new Chart(document.getElementById('amplitudeChart'), {
+  type: 'bar',
+  data: {
+    labels: ['Sóng P (mV)', 'QRS (mV)', 'Sóng T (mV)'],
+    datasets: [{
+      label: 'Biên độ (mV)',
+      data: [
+        {{ record.p_wave_amplitude|default:"null" }},
+        {{ record.qrs_amplitude|default:"null" }},
+        {{ record.t_wave_amplitude|default:"null" }}
+      ],
+      backgroundColor: ['#3b82f6', '#ef4444', '#f59e0b'],
+      borderRadius: 6,
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { display: false } },
+    scales: { y: { title: { display: true, text: 'mV' } } }
+  }
+});
+{% endif %}
+</script>
+{% endblock %}

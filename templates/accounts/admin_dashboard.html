@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+{% load ui_i18n %}
+{% block title %}{% t "Quản trị tài khoản" %} – ISR Hospital{% endblock %}
+{% block page_title %}<i class="fas fa-shield-alt me-2 text-primary"></i>{% t "Quản trị tài khoản" %}{% endblock %}
+{% block page_title_bar %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid pt-3">
+
+  <!-- Stats row -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="stat-card bg-primary text-white">
+        <div class="stat-icon"><i class="fas fa-users"></i></div>
+        <div class="stat-value">{{ total_patients }}</div>
+        <div class="stat-label">{% t "Bệnh nhân" %}</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-card bg-success text-white">
+        <div class="stat-icon"><i class="fas fa-user-md"></i></div>
+        <div class="stat-value">{{ total_doctors }}</div>
+        <div class="stat-label">{% t "Bác sĩ" %}</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-card" style="background:#0f766e;color:white;">
+        <div class="stat-icon"><i class="fas fa-user-nurse"></i></div>
+        <div class="stat-value">{{ total_nurses }}</div>
+        <div class="stat-label">{% t "Điều dưỡng / Y tá" %}</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-card bg-warning text-white">
+        <div class="stat-icon"><i class="fas fa-user-shield"></i></div>
+        <div class="stat-value">{{ total_admins }}</div>
+        <div class="stat-label">{% t "Quản trị viên" %}</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-card bg-info text-white">
+        <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+        <div class="stat-value">{{ total_active }}</div>
+        <div class="stat-label">{% t "Đang hoạt động" %}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Action buttons -->
+  <div class="card mb-4 shadow-sm">
+    <div class="card-body d-flex flex-wrap gap-2 align-items-center">
+      <span class="fw-semibold me-2"><i class="fas fa-plus-circle me-1 text-primary"></i>{% t "Tạo tài khoản:" %}</span>
+      <a href="{% url 'accounts:create_account' %}?role=patient" class="btn btn-primary btn-sm">
+        <i class="fas fa-user-injured me-1"></i>{% t "Bệnh nhân" %}
+      </a>
+      <a href="{% url 'accounts:create_account' %}?role=doctor" class="btn btn-success btn-sm">
+        <i class="fas fa-stethoscope me-1"></i>{% t "Bác sĩ" %}
+      </a>
+      <a href="{% url 'accounts:create_account' %}?role=nurse" class="btn btn-sm text-white" style="background:#0f766e;">
+        <i class="fas fa-user-nurse me-1"></i>{% t "Điều dưỡng / Y tá" %}
+      </a>
+      <a href="{% url 'accounts:create_account' %}?role=admin" class="btn btn-warning btn-sm">
+        <i class="fas fa-shield-alt me-1"></i>{% t "Quản trị viên" %}
+      </a>
+    </div>
+  </div>
+
+  <!-- Users table -->
+  <div class="card shadow-sm">
+    <div class="card-header bg-white fw-semibold">
+      <i class="fas fa-list me-2 text-primary"></i>{% t "Danh sách tài khoản" %}
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>#</th>
+              <th>{% t "Họ và tên" %}</th>
+              <th>Tên đăng nhập</th>
+              <th>{% t "Email" %}</th>
+              <th>{% t "Số điện thoại" %}</th>
+              <th>{% t "Vai trò" %}</th>
+              <th>{% t "Trạng thái" %}</th>
+              <th>{% t "Ngày tạo" %}</th>
+              <th class="text-center">{% t "Thao tác" %}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for u in users %}
+            <tr>
+              <td class="text-muted small">{{ forloop.counter }}</td>
+              <td class="fw-semibold">{{ u.get_full_name|default:"–" }}</td>
+              <td><code>{{ u.username }}</code></td>
+              <td>{{ u.email|default:"–" }}</td>
+              <td>{{ u.phone_number|default:"–" }}</td>
+              <td>
+                {% if u.role == 'admin' %}
+                  <span class="badge bg-warning text-dark"><i class="fas fa-shield-alt me-1"></i>{% t "Quản trị viên" %}</span>
+                {% elif u.role == 'doctor' %}
+                  <span class="badge bg-success"><i class="fas fa-stethoscope me-1"></i>{% t "Bác sĩ" %}</span>
+                {% elif u.role == 'nurse' %}
+                  <span class="badge text-white" style="background:#0f766e;"><i class="fas fa-user-nurse me-1"></i>{% t "Điều dưỡng / Y tá" %}</span>
+                {% else %}
+                  <span class="badge bg-primary"><i class="fas fa-user-injured me-1"></i>{% t "Bệnh nhân" %}</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if u.is_active %}
+                  <span class="badge bg-success-subtle text-success border border-success-subtle">
+                    <i class="fas fa-circle me-1" style="font-size:.55rem"></i>{% t "Hoạt động" %}
+                  </span>
+                {% else %}
+                  <span class="badge bg-danger-subtle text-danger border border-danger-subtle">
+                    <i class="fas fa-circle me-1" style="font-size:.55rem"></i>{% t "Vô hiệu" %}
+                  </span>
+                {% endif %}
+              </td>
+              <td class="text-muted small">{{ u.date_joined|date:"d/m/Y" }}</td>
+              <td class="text-center">
+                {% if u != request.user %}
+                  <!-- Toggle active -->
+                  <form method="post" action="{% url 'accounts:toggle_active' u.id %}" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit"
+                      class="btn btn-sm {% if u.is_active %}btn-outline-warning{% else %}btn-outline-success{% endif %}"
+                      title="{% if u.is_active %}{% t 'Vô hiệu hóa' %}{% else %}{% t 'Kích hoạt' %}{% endif %}">
+                      <i class="fas {% if u.is_active %}fa-ban{% else %}fa-check{% endif %}"></i>
+                    </button>
+                  </form>
+                  <!-- Delete -->
+                  <a href="{% url 'accounts:delete_account' u.id %}" class="btn btn-sm btn-outline-danger ms-1" title="{% t 'Xóa' %}">
+                    <i class="fas fa-trash-alt"></i>
+                  </a>
+                {% else %}
+                  <span class="text-muted small">—</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="9" class="text-center text-muted py-4">{% t "Không có tài khoản nào." %}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

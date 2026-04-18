@@ -1,0 +1,315 @@
+{% extends "base.html" %}
+{% load ui_i18n %}
+{% block title %}{% t "Tổng quan" %} – {{ profile.user.get_full_name }}{% endblock %}
+{% block page_title %}<i class="fas fa-home me-2 text-primary"></i>{% t "Tổng quan sức khỏe" %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+
+  <div class="dashboard-hero patient-hero mb-4">
+    <div class="dashboard-hero-main">
+      <div class="d-flex align-items-center gap-3">
+        <span class="dashboard-hero-icon"><i class="fas fa-user-heart"></i></span>
+        <div>
+          <div class="dashboard-eyebrow">HỒ SƠ THEO DÕI SỨC KHỎE</div>
+          <h3 class="dashboard-hero-title mb-1">{{ profile.user.get_full_name }}</h3>
+          <div class="d-flex flex-wrap gap-3 text-light small opacity-90">
+            <span><i class="fas fa-venus-mars me-1"></i>{{ profile.get_gender_display }}</span>
+            {% if profile.blood_type %}<span><i class="fas fa-tint me-1"></i>Nhóm máu {{ profile.blood_type }}</span>{% endif %}
+            {% if profile.admission_date %}<span><i class="fas fa-calendar-check me-1"></i>{% t "Nhập viện" %}: {{ profile.admission_date|date:"d/m/Y" }}</span>{% endif %}
+            <span><i class="fas fa-bed-pulse me-1"></i>{{ profile.get_treatment_status_display }}</span>
+            {% if profile.doctor %}<span><i class="fas fa-stethoscope me-1"></i>BS. {{ profile.doctor.user.get_full_name }}</span>{% endif %}
+          </div>
+          {% if profile.diagnosis %}
+          <div class="dashboard-inline-note mt-2 text-white-50"><i class="fas fa-notes-medical me-1"></i>{{ profile.diagnosis }}</div>
+          {% endif %}
+        </div>
+      </div>
+      <div class="dashboard-chip-row mt-3">
+        <span class="dashboard-chip neutral"><i class="fas fa-wave-square me-1"></i>{{ ecg_count }} ECG</span>
+        <span class="dashboard-chip accent"><i class="fas fa-chart-line me-1"></i>{{ recovery_count }} mốc phục hồi</span>
+        {% if latest_recovery %}<span class="dashboard-chip danger"><i class="fas fa-face-grimace me-1"></i>Đau {{ latest_recovery.pain_level }}/10</span>{% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="patient-status-panel mb-4">
+    <div class="patient-status-header">
+      <div>
+        <div class="dashboard-eyebrow text-primary">THEO DÕI HÔM NAY</div>
+        <h5 class="mb-1">Tóm tắt cảnh báo và diễn biến gần nhất</h5>
+        <p class="text-muted mb-0">Tập trung vào những chỉ số cần chú ý trong lần ghi nhận mới nhất.</p>
+      </div>
+    </div>
+    <div class="patient-alert-list mt-3">
+      {% for alert in alert_items %}
+      <div class="patient-alert-pill {{ alert.level }}">
+        <i class="fas {{ alert.icon }}"></i>
+        <span>{{ alert.text }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Quick stat cards -->
+  <div class="row g-3 mb-4">
+    {% if latest_ecg %}
+    <div class="col-6 col-md-3">
+      <div class="stat-card {% if latest_ecg.is_abnormal %}bg-danger{% else %}bg-success{% endif %} text-white">
+        <div class="stat-icon"><i class="fas fa-heart-pulse"></i></div>
+        <div class="stat-value">{{ latest_ecg.heart_rate }}</div>
+        <div class="stat-label">{% t "Nhịp tim (bpm)" %}</div>
+      </div>
+    </div>
+    {% endif %}
+    {% if latest_recovery %}
+    <div class="col-6 col-md-3">
+      <div class="stat-card bg-info text-white">
+        <div class="stat-icon"><i class="fas fa-walking"></i></div>
+        <div class="stat-value">{{ latest_recovery.recovery_percentage }}%</div>
+        <div class="stat-label">{% t "Phục hồi" %}</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-card bg-warning text-white">
+        <div class="stat-icon"><i class="fas fa-dumbbell"></i></div>
+        <div class="stat-value">{{ latest_recovery.muscle_strength }}/5</div>
+        <div class="stat-label">{% t "Sức mạnh cơ (MRC)" %}</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-card {% if latest_recovery.pain_level > 6 %}bg-danger{% elif latest_recovery.pain_level > 3 %}bg-warning{% else %}bg-success{% endif %} text-white">
+        <div class="stat-icon"><i class="fas fa-face-grimace"></i></div>
+        <div class="stat-value">{{ latest_recovery.pain_level }}/10</div>
+        <div class="stat-label">{% t "Mức độ đau (VAS)" %}</div>
+      </div>
+    </div>
+    {% if latest_recovery.spo2 %}
+    <div class="col-6 col-md-3">
+      <div class="stat-card bg-primary text-white">
+        <div class="stat-icon"><i class="fas fa-lungs"></i></div>
+        <div class="stat-value">{{ latest_recovery.spo2 }}%</div>
+        <div class="stat-label">SpO₂</div>
+      </div>
+    </div>
+    {% endif %}
+    {% endif %}
+  </div>
+
+  <div class="row g-4">
+    <!-- ECG Chart -->
+    <div class="col-lg-6">
+      <div class="card shadow-sm h-100 dashboard-section-card">
+        <div class="card-header bg-white d-flex align-items-center justify-content-between">
+          <span class="fw-semibold"><i class="fas fa-wave-square me-2 text-danger"></i>{% t "Xu hướng nhịp tim" %}</span>
+          <a href="{% url 'patients:ecg_list' %}" class="btn btn-sm btn-outline-primary">
+            {% t "Xem tất cả" %} <i class="fas fa-arrow-right ms-1"></i>
+          </a>
+        </div>
+        <div class="card-body">
+          {% if ecg_chart_data != '[]' %}
+          <canvas id="ecgChart" height="200"></canvas>
+          {% else %}
+          <div class="text-center text-muted py-4">
+            <i class="fas fa-wave-square fa-3x mb-2 opacity-25"></i>
+            <p>{% t "Chưa có dữ liệu ECG" %}</p>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Recovery Chart -->
+    <div class="col-lg-6">
+      <div class="card shadow-sm h-100 dashboard-section-card">
+        <div class="card-header bg-white d-flex align-items-center justify-content-between">
+          <span class="fw-semibold"><i class="fas fa-chart-line me-2 text-success"></i>{% t "Tiến trình phục hồi" %}</span>
+          <a href="{% url 'patients:recovery' %}" class="btn btn-sm btn-outline-success">
+            {% t "Chi tiết" %} <i class="fas fa-arrow-right ms-1"></i>
+          </a>
+        </div>
+        <div class="card-body">
+          {% if rec_chart_data != '[]' %}
+          <canvas id="recoveryChart" height="200"></canvas>
+          {% else %}
+          <div class="text-center text-muted py-4">
+            <i class="fas fa-walking fa-3x mb-2 opacity-25"></i>
+            <p>{% t "Chưa có dữ liệu phục hồi." %}</p>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Latest ECG summary -->
+    {% if latest_ecg %}
+    <div class="col-lg-6">
+      <div class="card shadow-sm dashboard-section-card">
+        <div class="card-header bg-white fw-semibold">
+          <i class="fas fa-file-medical me-2 text-danger"></i>{% t "ECG gần nhất" %}
+          <span class="text-muted small ms-2">{{ latest_ecg.recorded_at|date:"d/m/Y H:i" }}</span>
+        </div>
+        <div class="card-body">
+          <div class="row g-2">
+            {% with latest_ecg.hr_status as sts %}
+            <div class="col-6">
+              <div class="ecg-param-box border-{{ sts.0 }}">
+                <div class="param-label">{% t "Nhịp tim" %}</div>
+                <div class="param-value text-{{ sts.0 }}">{{ latest_ecg.heart_rate }} <small>bpm</small></div>
+                <div class="param-status badge bg-{{ sts.0 }}">{{ sts.1 }}</div>
+              </div>
+            </div>
+            {% endwith %}
+            {% with latest_ecg.pr_status as sts %}
+            <div class="col-6">
+              <div class="ecg-param-box border-{{ sts.0 }}">
+                <div class="param-label">{% t "Khoảng PR" %}</div>
+                <div class="param-value text-{{ sts.0 }}">{{ latest_ecg.pr_interval }} <small>ms</small></div>
+                <div class="param-status badge bg-{{ sts.0 }}">{{ sts.1 }}</div>
+              </div>
+            </div>
+            {% endwith %}
+            {% with latest_ecg.qrs_status as sts %}
+            <div class="col-6">
+              <div class="ecg-param-box border-{{ sts.0 }}">
+                <div class="param-label">{% t "Thời gian QRS" %}</div>
+                <div class="param-value text-{{ sts.0 }}">{{ latest_ecg.qrs_duration }} <small>ms</small></div>
+                <div class="param-status badge bg-{{ sts.0 }}">{{ sts.1 }}</div>
+              </div>
+            </div>
+            {% endwith %}
+            {% with latest_ecg.qt_status as sts %}
+            <div class="col-6">
+              <div class="ecg-param-box border-{{ sts.0 }}">
+                <div class="param-label">{% t "Khoảng QT" %}</div>
+                <div class="param-value text-{{ sts.0 }}">{{ latest_ecg.qt_interval }} <small>ms</small></div>
+                <div class="param-status badge bg-{{ sts.0 }}">{{ sts.1 }}</div>
+              </div>
+            </div>
+            {% endwith %}
+          </div>
+          <div class="mt-3 p-2 rounded {% if latest_ecg.is_abnormal %}bg-danger-subtle{% else %}bg-success-subtle{% endif %}">
+            <i class="fas {% if latest_ecg.is_abnormal %}fa-exclamation-triangle text-danger{% else %}fa-check-circle text-success{% endif %} me-2"></i>
+            <strong>{% t "Nhịp:" %}</strong> {{ latest_ecg.get_rhythm_display }}
+            {% if latest_ecg.is_abnormal %}
+            <span class="badge bg-danger ms-2">{% t "Cần chú ý" %}</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Latest recovery summary -->
+    {% if latest_recovery %}
+    <div class="col-lg-6">
+      <div class="card shadow-sm dashboard-section-card">
+        <div class="card-header bg-white fw-semibold">
+          <i class="fas fa-walking me-2 text-success"></i>{% t "Phục hồi gần đây" %}
+          <span class="text-muted small ms-2">{{ latest_recovery.recorded_at|date:"d/m/Y" }}</span>
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <div class="d-flex justify-content-between mb-1">
+              <span class="fw-semibold">{% t "Tỷ lệ phục hồi tổng thể" %}</span>
+              <span class="fw-bold text-{{ latest_recovery.recovery_color }}">{{ latest_recovery.recovery_percentage }}%</span>
+            </div>
+            <div class="progress" style="height:14px">
+              <div class="progress-bar bg-{{ latest_recovery.recovery_color }} progress-bar-striped"
+                   role="progressbar" style="width:{{ latest_recovery.recovery_percentage }}%"></div>
+            </div>
+          </div>
+          <div class="row g-2 text-center">
+            <div class="col-4">
+              <div class="recovery-mini-stat">
+                <div class="text-{{ latest_recovery.muscle_color }} fw-bold fs-5">{{ latest_recovery.muscle_strength }}/5</div>
+                <div class="small text-muted">{% t "Sức cơ MRC" %}</div>
+              </div>
+            </div>
+            <div class="col-4">
+              <div class="recovery-mini-stat">
+                <div class="text-info fw-bold fs-5">{{ latest_recovery.range_of_motion }}°</div>
+                <div class="small text-muted">{% t "Biên độ" %}</div>
+              </div>
+            </div>
+            <div class="col-4">
+              <div class="recovery-mini-stat">
+                <div class="text-{{ latest_recovery.pain_color }} fw-bold fs-5">{{ latest_recovery.pain_level }}/10</div>
+                <div class="small text-muted">{% t "Đau VAS" %}</div>
+              </div>
+            </div>
+          </div>
+          <div class="row g-2 text-center mt-1">
+            {% if latest_recovery.heart_rate %}<div class="col-4"><div class="recovery-mini-stat"><div class="text-danger fw-bold fs-6">{{ latest_recovery.heart_rate }}</div><div class="small text-muted">HR</div></div></div>{% endif %}
+            {% if latest_recovery.spo2 %}<div class="col-4"><div class="recovery-mini-stat"><div class="text-primary fw-bold fs-6">{{ latest_recovery.spo2 }}%</div><div class="small text-muted">SpO₂</div></div></div>{% endif %}
+            {% if latest_recovery.fatigue_index is not None %}<div class="col-4"><div class="recovery-mini-stat"><div class="text-{{ latest_recovery.fatigue_color }} fw-bold fs-6">{{ latest_recovery.fatigue_index }}/10</div><div class="small text-muted">Fatigue</div></div></div>{% endif %}
+          </div>
+          <div class="mt-3 p-2 rounded bg-light small">
+            <i class="fas fa-shoe-prints me-2 text-primary"></i>
+            <strong>{% t "Khả năng đi lại:" %}</strong> {{ latest_recovery.get_walking_ability_display }}
+            {% if latest_recovery.gait_speed %}<br><i class="fas fa-person-walking me-2 text-success"></i><strong>Gait speed:</strong> {{ latest_recovery.gait_speed }} m/s{% endif %}
+            {% if latest_recovery.plantar_force %}<br><i class="fas fa-shoe-prints me-2 text-warning"></i><strong>Force:</strong> {{ latest_recovery.plantar_force }} N{% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const ecgData = {{ ecg_chart_data|safe }};
+const recData = {{ rec_chart_data|safe }};
+
+if (ecgData.length && document.getElementById('ecgChart')) {
+  new Chart(document.getElementById('ecgChart'), {
+    type: 'line',
+    data: {
+      labels: ecgData.map(r => r.recorded_at),
+      datasets: [{
+        label: 'Nhịp tim (bpm)',
+        data: ecgData.map(r => r.heart_rate),
+        borderColor: '#ef4444',
+        backgroundColor: 'rgba(239,68,68,0.1)',
+        fill: true,
+        tension: 0.4,
+        pointRadius: 4,
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { beginAtZero: false, min: 40, title: { display: true, text: 'bpm' } }
+      }
+    }
+  });
+}
+
+if (recData.length && document.getElementById('recoveryChart')) {
+  new Chart(document.getElementById('recoveryChart'), {
+    type: 'line',
+    data: {
+      labels: recData.map(r => r.recorded_at),
+      datasets: [{
+        label: 'Tỷ lệ phục hồi (%)',
+        data: recData.map(r => r.recovery_percentage),
+        borderColor: '#16a34a',
+        backgroundColor: 'rgba(22,163,74,0.1)',
+        fill: true,
+        tension: 0.4,
+        pointRadius: 4,
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true, max: 100, title: { display: true, text: '%' } } }
+    }
+  });
+}
+</script>
+{% endblock %}
