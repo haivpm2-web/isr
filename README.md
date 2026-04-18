@@ -32,6 +32,13 @@ Hệ thống quản lý bệnh viện phục hồi chức năng – Django Web A
 
 ## Cài đặt
 
+### 0. Clone source code
+
+```bash
+git clone https://github.com/haivpm2-web/isr.git
+cd isr
+```
+
 ### 1. Tạo môi trường ảo & cài thư viện
 
 ```bash
@@ -42,6 +49,16 @@ venv\Scripts\activate
 source venv/bin/activate
 
 pip install -r requirements.txt
+```
+
+Tạo file môi trường local từ file mẫu:
+
+```bash
+# Windows PowerShell
+Copy-Item .env.example .env
+
+# Linux/Mac
+cp .env.example .env
 ```
 
 ### 2. Migrate database
@@ -98,6 +115,8 @@ DJANGO_DEBUG=False
 `DATABASE_URL` sẽ được Railway tự cấp khi bạn thêm PostgreSQL.
 
 App hiện tự đọc `RAILWAY_PUBLIC_DOMAIN` do Railway cung cấp để thêm vào `ALLOWED_HOSTS` và `CSRF_TRUSTED_ORIGINS`. Bạn chỉ cần khai báo thêm `DJANGO_ALLOWED_HOSTS` hoặc `DJANGO_CSRF_TRUSTED_ORIGINS` nếu dùng custom domain hoặc muốn mở rộng thêm host khác.
+
+Nếu cần, có thể copy giá trị từ `.env.example` để làm mốc cấu hình local trước khi tách riêng biến môi trường trên Railway.
 
 ### 3. Deploy
 
