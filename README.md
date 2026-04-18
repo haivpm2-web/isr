@@ -112,6 +112,8 @@ DJANGO_SECRET_KEY=your-strong-secret-key
 DJANGO_DEBUG=False
 DJANGO_SECURE_SSL_REDIRECT=True
 DJANGO_SECURE_HSTS_SECONDS=3600
+DJANGO_LOAD_DEMO_DATA=True
+DJANGO_DEMO_PASSWORD=Demo@12345
 ```
 
 `DATABASE_URL` sẽ được Railway tự cấp khi bạn thêm PostgreSQL.
@@ -119,6 +121,8 @@ DJANGO_SECURE_HSTS_SECONDS=3600
 App hiện tự đọc `RAILWAY_PUBLIC_DOMAIN` do Railway cung cấp để thêm vào `ALLOWED_HOSTS` và `CSRF_TRUSTED_ORIGINS`. Bạn chỉ cần khai báo thêm `DJANGO_ALLOWED_HOSTS` hoặc `DJANGO_CSRF_TRUSTED_ORIGINS` nếu dùng custom domain hoặc muốn mở rộng thêm host khác.
 
 Nên dùng `DJANGO_SECRET_KEY` dài và ngẫu nhiên. Với Railway, `DJANGO_SECURE_SSL_REDIRECT=True` và `DJANGO_SECURE_HSTS_SECONDS=3600` là cấu hình production an toàn để bắt buộc HTTPS.
+
+Nếu cần dữ liệu demo để test giao diện, bật `DJANGO_LOAD_DEMO_DATA=True` ở lần deploy đầu. App sẽ tự tạo 1 admin, 1 bác sĩ, 1 điều dưỡng và 2 bệnh nhân mẫu cùng dữ liệu ECG, phục hồi, khám, đơn thuốc và đánh giá PHCN. Có thể đổi `DJANGO_DEMO_PASSWORD` sang mật khẩu riêng trước khi deploy. Sau khi seed xong nên đổi lại `DJANGO_LOAD_DEMO_DATA=False`.
 
 Nếu cần, có thể copy giá trị từ `.env.example` để làm mốc cấu hình local trước khi tách riêng biến môi trường trên Railway.
 
