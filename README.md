@@ -138,13 +138,13 @@ bash railway-start.sh
 Script này sẽ lần lượt chạy:
 
 ```bash
-python3 manage.py collectstatic --noinput
-python3 manage.py migrate
-python3 manage.py seed_demo_data
-python3 -m gunicorn hospital_isr.wsgi --bind 0.0.0.0:$PORT
+/opt/venv/bin/python manage.py collectstatic --noinput
+/opt/venv/bin/python manage.py migrate
+/opt/venv/bin/python manage.py seed_demo_data
+/opt/venv/bin/python -m gunicorn hospital_isr.wsgi --bind 0.0.0.0:$PORT
 ```
 
-`nixpacks.toml` hiện chỉ dùng Python provider trên Railway, bỏ qua bước package-manager mặc định của Nixpacks và tự bootstrap `pip` bằng `python3` trước khi cài `requirements.txt`.
+`nixpacks.toml` hiện chỉ dùng Python provider trên Railway, tự tạo virtualenv tại `/opt/venv`, rồi cài package vào đó để tránh lỗi PEP 668 của Python hệ thống trên Nix.
 
 ### 4. Lưu ý
 
