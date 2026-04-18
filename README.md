@@ -132,8 +132,15 @@ Nếu cần, có thể copy giá trị từ `.env.example` để làm mốc cấ
 Project đã có sẵn file `railway.json`, Railway sẽ tự chạy:
 
 ```bash
+npm run railway:start
+```
+
+Các npm script bên trong sẽ lần lượt chạy:
+
+```bash
 python manage.py collectstatic --noinput
 python manage.py migrate
+python manage.py seed_demo_data
 gunicorn hospital_isr.wsgi --bind 0.0.0.0:$PORT
 ```
 

@@ -1,0 +1,11 @@
+{
+  "name": "isr-hospital",
+  "private": true,
+  "scripts": {
+    "railway:collectstatic": "python manage.py collectstatic --noinput",
+    "railway:migrate": "python manage.py migrate",
+    "railway:seed": "python manage.py seed_demo_data",
+    "railway:gunicorn": "gunicorn hospital_isr.wsgi --bind 0.0.0.0:$PORT",
+    "railway:start": "npm run railway:collectstatic && npm run railway:migrate && npm run railway:seed && npm run railway:gunicorn"
+  }
+}
