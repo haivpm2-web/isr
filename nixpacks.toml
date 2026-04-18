@@ -1,0 +1,12 @@
+[phases.setup]
+nixPkgs = ["python312", "python312Packages.pip", "nodejs_18"]
+
+[phases.install]
+cmds = [
+  "python3 -m pip install --upgrade pip || python -m pip install --upgrade pip",
+  "python3 -m pip install -r requirements.txt || python -m pip install -r requirements.txt",
+  "npm install"
+]
+
+[start]
+cmd = "npm run railway:start"

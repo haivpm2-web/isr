@@ -138,10 +138,10 @@ npm run railway:start
 Các npm script bên trong sẽ lần lượt chạy:
 
 ```bash
-python manage.py collectstatic --noinput
-python manage.py migrate
-python manage.py seed_demo_data
-gunicorn hospital_isr.wsgi --bind 0.0.0.0:$PORT
+python3 manage.py collectstatic --noinput
+python3 manage.py migrate
+python3 manage.py seed_demo_data
+python3 -m gunicorn hospital_isr.wsgi --bind 0.0.0.0:$PORT
 ```
 
 ### 4. Lưu ý
