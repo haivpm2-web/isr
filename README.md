@@ -132,17 +132,19 @@ Nếu cần, có thể copy giá trị từ `.env.example` để làm mốc cấ
 Project đã có sẵn file `railway.json`, Railway sẽ tự chạy:
 
 ```bash
-npm run railway:start
+bash railway-start.sh
 ```
 
-Các npm script bên trong sẽ lần lượt chạy:
+Script này sẽ lần lượt chạy:
 
 ```bash
-python3 manage.py collectstatic --noinput
-python3 manage.py migrate
-python3 manage.py seed_demo_data
-python3 -m gunicorn hospital_isr.wsgi --bind 0.0.0.0:$PORT
+/opt/venv/bin/python manage.py collectstatic --noinput
+/opt/venv/bin/python manage.py migrate
+/opt/venv/bin/python manage.py seed_demo_data
+/opt/venv/bin/gunicorn hospital_isr.wsgi --bind 0.0.0.0:$PORT
 ```
+
+`nixpacks.toml` hiện chỉ dùng Python provider trên Railway, tự bootstrap `pip` trong `/opt/venv` và bỏ qua bước `python -m pip` mặc định vốn có thể fail với Python 3.12 trên Nix.
 
 ### 4. Lưu ý
 
